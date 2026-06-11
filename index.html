@@ -5,293 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Exercise Tracker</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; color: #1a202c; }
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f0f4f8;
-    min-height: 100vh;
-    color: #1a202c;
-  }
+#home { align-items: center; justify-content: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.home-header { text-align: center; color: white; margin-bottom: 3rem; }
+.home-header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.home-header p { font-size: 1.1rem; opacity: 0.85; }
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; width: 100%; max-width: 480px; }
+.profile-card { background: white; border-radius: 20px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+.profile-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+.profile-card:active { transform: scale(0.97); }
+.profile-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+.avatar-mom { background: #fed7e2; }
+.avatar-dad { background: #bee3f8; }
+.profile-card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.4rem; }
+.streak-mini { font-size: 0.85rem; color: #718096; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.done-badge { display: inline-block; background: #c6f6d5; color: #276749; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-top: 6px; }
 
-  .screen { display: none; min-height: 100vh; }
-  .screen.active { display: flex; flex-direction: column; }
+#exercise { background: #1a202c; color: white; }
+.ex-topbar { display: flex; align-items: center; padding: 1rem 1.2rem; background: #2d3748; gap: 1rem; flex-shrink: 0; }
+.back-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ex-topbar-info { flex: 1; }
+.ex-topbar-info h2 { font-size: 1.1rem; font-weight: 600; }
+.ex-topbar-info p { font-size: 0.8rem; color: #a0aec0; }
+.streak-badge { background: linear-gradient(135deg, #f6ad55, #ed8936); border-radius: 12px; padding: 6px 12px; text-align: center; }
+.streak-badge .num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+.streak-badge .lbl { font-size: 0.65rem; opacity: 0.9; }
 
-  /* ── HOME SCREEN ── */
-  #home {
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
+.ex-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
-  .home-header {
-    text-align: center;
-    color: white;
-    margin-bottom: 3rem;
-  }
-  .home-header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
-  .home-header p { font-size: 1.1rem; opacity: 0.85; }
+.camera-zone { position: relative; width: 100%; flex: 1; background: #000; overflow: hidden; min-height: 0; }
+#camera-feed { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+#stick-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  .profile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 480px;
-  }
+.model-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; z-index: 20; color: white; text-align: center; padding: 2rem; }
+.model-overlay.hidden { display: none; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.model-overlay p { font-size: 0.85rem; color: #a0aec0; max-width: 240px; line-height: 1.5; }
 
-  .profile-card {
-    background: white;
-    border-radius: 20px;
-    padding: 2rem 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  }
-  .profile-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
-  .profile-card:active { transform: scale(0.97); }
+.cv-strip { background: #1a365d; padding: 6px 14px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-height: 34px; }
+.cv-dot { width: 8px; height: 8px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
+.cv-dot.on { background: #48bb78; animation: blink 1.2s ease infinite; }
+.cv-dot.warn { background: #f6ad55; animation: blink 1.2s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.cv-text { font-size: 0.78rem; color: #90cdf4; flex: 1; }
+.cv-reps { font-size: 0.8rem; font-weight: 700; color: #68d391; white-space: nowrap; }
 
-  .profile-avatar {
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    margin: 0 auto 1rem;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2.5rem;
-  }
-  .avatar-mom { background: #fed7e2; }
-  .avatar-dad { background: #bee3f8; }
+.ex-panel { background: #2d3748; padding: 1rem 1.2rem; flex-shrink: 0; }
+.ex-name-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ex-name { font-size: 1.1rem; font-weight: 700; }
+.ex-counter { background: #4a5568; border-radius: 8px; padding: 3px 10px; font-size: 0.8rem; color: #e2e8f0; }
+.progress-track { background: #4a5568; border-radius: 4px; height: 7px; margin-bottom: 8px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #48bb78, #38a169); transition: width 0.4s; width: 0%; }
+.progress-fill.done { background: linear-gradient(90deg, #68d391, #48bb78); }
+.ex-desc { font-size: 0.8rem; color: #a0aec0; margin-bottom: 10px; line-height: 1.4; }
+.ex-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+.ex-dot { width: 9px; height: 9px; border-radius: 50%; background: #4a5568; transition: background 0.3s; }
+.ex-dot.cur { background: #63b3ed; }
+.ex-dot.ok { background: #48bb78; }
+.ex-nav { display: flex; gap: 0.8rem; margin-bottom: 0.8rem; }
+.ex-nav button { flex: 1; padding: 9px; border: 1.5px solid #4a5568; background: transparent; color: white; border-radius: 10px; font-size: 0.85rem; cursor: pointer; transition: background 0.1s; }
+.ex-nav button:hover { background: #4a5568; }
+.done-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(72,187,120,0.4); transition: transform 0.1s; }
+.done-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.done-btn:disabled { background: #4a5568; box-shadow: none; cursor: default; transform: none; }
 
-  .profile-card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.4rem; }
-  .profile-card .streak-mini {
-    font-size: 0.85rem;
-    color: #718096;
-    display: flex; align-items: center; justify-content: center; gap: 4px;
-  }
-  .streak-fire { font-size: 1rem; }
-
-  .done-badge {
-    display: inline-block;
-    background: #c6f6d5;
-    color: #276749;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-top: 6px;
-  }
-
-  /* ── EXERCISE SCREEN ── */
-  #exercise {
-    background: #1a202c;
-    color: white;
-  }
-
-  .ex-topbar {
-    display: flex;
-    align-items: center;
-    padding: 1rem 1.2rem;
-    background: #2d3748;
-    gap: 1rem;
-  }
-  .back-btn {
-    background: rgba(255,255,255,0.1);
-    border: none;
-    color: white;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    font-size: 1.1rem;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .ex-topbar-info { flex: 1; }
-  .ex-topbar-info h2 { font-size: 1.1rem; font-weight: 600; }
-  .ex-topbar-info p { font-size: 0.8rem; color: #a0aec0; }
-
-  .streak-badge {
-    background: linear-gradient(135deg, #f6ad55, #ed8936);
-    border-radius: 12px;
-    padding: 6px 12px;
-    text-align: center;
-  }
-  .streak-badge .num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
-  .streak-badge .lbl { font-size: 0.65rem; opacity: 0.9; }
-
-  .ex-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* Camera + figure overlay */
-  .camera-zone {
-    position: relative;
-    width: 100%;
-    flex: 1;
-    background: #000;
-    overflow: hidden;
-    min-height: 0;
-  }
-
-  #camera-feed {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
-    opacity: 0;
-    transition: opacity 0.5s;
-  }
-  #camera-feed.on { opacity: 1; }
-
-  .camera-placeholder {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 0.8rem;
-    color: #718096;
-  }
-  .camera-placeholder .cam-icon { font-size: 3rem; }
-  .camera-placeholder p { font-size: 0.9rem; }
-
-  .figure-overlay {
-    position: absolute; inset: 0;
-    pointer-events: none;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  #stick-canvas {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Exercise info panel */
-  .ex-panel {
-    background: #2d3748;
-    padding: 1.2rem;
-  }
-
-  .ex-name-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-  }
-  .ex-name { font-size: 1.2rem; font-weight: 700; }
-  .ex-counter {
-    background: #4a5568;
-    border-radius: 10px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    color: #e2e8f0;
-  }
-
-  .ex-desc { font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem; line-height: 1.5; }
-
-  .ex-nav {
-    display: flex;
-    gap: 0.8rem;
-    margin-bottom: 0.8rem;
-  }
-  .ex-nav button {
-    flex: 1;
-    padding: 10px;
-    border: 1.5px solid #4a5568;
-    background: transparent;
-    color: white;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.1s;
-  }
-  .ex-nav button:hover { background: #4a5568; }
-
-  .done-btn {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #48bb78, #38a169);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
-    box-shadow: 0 4px 15px rgba(72,187,120,0.4);
-  }
-  .done-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(72,187,120,0.5); }
-  .done-btn:active { transform: scale(0.98); }
-  .done-btn:disabled {
-    background: #4a5568;
-    box-shadow: none;
-    cursor: default;
-    transform: none;
-  }
-
-  /* Camera start overlay */
-  .cam-start-overlay {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 1rem;
-    z-index: 10;
-  }
-  .cam-start-overlay h3 { font-size: 1.1rem; color: white; }
-  .cam-start-btn {
-    background: white;
-    color: #1a202c;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 28px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .cam-start-overlay.hidden { display: none; }
-
-  /* Celebration overlay */
-  .celebration {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .celebration.show { opacity: 1; pointer-events: all; }
-  .celebration h2 { font-size: 2rem; color: white; margin-bottom: 0.5rem; text-align: center; }
-  .celebration p { color: #a0aec0; font-size: 1.1rem; margin-bottom: 2rem; }
-  .confetti-area { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  .celebration-close {
-    background: white;
-    color: #1a202c;
-    border: none;
-    border-radius: 14px;
-    padding: 14px 40px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    z-index: 1;
-  }
-  .big-streak {
-    font-size: 4rem;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-  }
-
-  @media (max-height: 700px) {
-    .ex-panel { padding: 0.8rem; }
-    .ex-desc { display: none; }
-  }
+.celebration { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.celebration.show { opacity: 1; pointer-events: all; }
+.celebration h2 { font-size: 2rem; color: white; margin-bottom: 0.5rem; text-align: center; }
+.celebration p { color: #a0aec0; font-size: 1.1rem; margin-bottom: 2rem; }
+.confetti-area { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.cel-close { background: white; color: #1a202c; border: none; border-radius: 14px; padding: 14px 40px; font-size: 1.1rem; font-weight: 700; cursor: pointer; z-index: 1; }
+.big-streak { font-size: 4rem; line-height: 1; margin-bottom: 0.5rem; }
 </style>
 </head>
 <body>
 
-<!-- HOME SCREEN -->
 <div id="home" class="screen active">
   <div class="home-header">
     <h1>Daily Exercises 💪</h1>
@@ -301,25 +94,18 @@
     <div class="profile-card" onclick="openProfile('mom')">
       <div class="profile-avatar avatar-mom">👩</div>
       <h2>Mom</h2>
-      <div class="streak-mini">
-        <span class="streak-fire">🔥</span>
-        <span id="mom-streak-mini">0 day streak</span>
-      </div>
+      <div class="streak-mini">🔥 <span id="mom-streak-mini">0 day streak</span></div>
       <div id="mom-done-badge" class="done-badge" style="display:none">✓ Done today</div>
     </div>
     <div class="profile-card" onclick="openProfile('dad')">
       <div class="profile-avatar avatar-dad">👨</div>
       <h2>Dad</h2>
-      <div class="streak-mini">
-        <span class="streak-fire">🔥</span>
-        <span id="dad-streak-mini">0 day streak</span>
-      </div>
+      <div class="streak-mini">🔥 <span id="dad-streak-mini">0 day streak</span></div>
       <div id="dad-done-badge" class="done-badge" style="display:none">✓ Done today</div>
     </div>
   </div>
 </div>
 
-<!-- EXERCISE SCREEN -->
 <div id="exercise" class="screen">
   <div class="ex-topbar">
     <button class="back-btn" onclick="goHome()">←</button>
@@ -332,492 +118,437 @@
       <div class="lbl">🔥 streak</div>
     </div>
   </div>
-
   <div class="ex-main">
     <div class="camera-zone" id="camera-zone">
       <video id="camera-feed" autoplay playsinline muted></video>
-      <div class="camera-placeholder" id="cam-placeholder">
-        <div class="cam-icon">📷</div>
-        <p>Camera not started</p>
-      </div>
-      <div class="figure-overlay">
-        <canvas id="stick-canvas"></canvas>
-      </div>
-      <div class="cam-start-overlay" id="cam-overlay">
-        <h3>Enable camera to see yourself</h3>
-        <button class="cam-start-btn" onclick="startCamera()">Start Camera</button>
-        <button class="cam-start-btn" style="background:#4a5568;color:white;margin-top:4px" onclick="dismissCamera()">Skip camera</button>
+      <canvas id="stick-canvas"></canvas>
+      <div class="model-overlay" id="model-overlay">
+        <div class="spinner"></div>
+        <h3>Loading pose detection…</h3>
+        <p>Starting camera and AI model. Stand 5–8 ft away so your full body is visible.</p>
       </div>
     </div>
-
+    <div class="cv-strip">
+      <div class="cv-dot warn" id="cv-dot"></div>
+      <span class="cv-text" id="cv-text">Starting…</span>
+      <span class="cv-reps" id="cv-reps"></span>
+    </div>
     <div class="ex-panel">
       <div class="ex-name-row">
-        <div class="ex-name" id="ex-name">Exercise</div>
-        <div class="ex-counter" id="ex-counter">1 / 4</div>
+        <div class="ex-name" id="ex-name"></div>
+        <div class="ex-counter" id="ex-counter"></div>
       </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
       <div class="ex-desc" id="ex-desc"></div>
+      <div class="ex-dots" id="ex-dots"></div>
       <div class="ex-nav">
-        <button onclick="prevExercise()">← Previous</button>
-        <button onclick="nextExercise()">Next →</button>
+        <button onclick="prevEx()">← Prev</button>
+        <button onclick="nextEx()">Next →</button>
       </div>
-      <button class="done-btn" id="done-btn" onclick="markDone()">
-        ✓ Mark All Done for Today
+      <button class="done-btn" id="done-btn" onclick="markDone()" disabled>
+        Complete all exercises first
       </button>
     </div>
   </div>
 </div>
 
-<!-- CELEBRATION -->
 <div class="celebration" id="celebration">
   <div class="confetti-area" id="confetti-area"></div>
   <div class="big-streak" id="cel-streak">🔥</div>
-  <h2 id="cel-title">Amazing work!</h2>
-  <p id="cel-desc">Keep it up!</p>
-  <button class="celebration-close" onclick="closeCelebration()">Back Home</button>
+  <h2 id="cel-title"></h2>
+  <p id="cel-desc"></p>
+  <button class="cel-close" onclick="closeCel()">Back Home</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 <script>
-// ──────────────────────────────────────────────
-// DATA
-// ──────────────────────────────────────────────
-const EXERCISES = [
-  {
-    id: 'march',
-    name: 'Standing March',
-    desc: 'Lift knees alternately to hip height. Keep your back straight and swing your arms gently. Great for circulation and balance.',
-    reps: '30 seconds',
-    draw: drawMarch
-  },
-  {
-    id: 'armcircle',
-    name: 'Arm Circles',
-    desc: 'Extend arms out to the sides and make slow circles forward, then backward. Loosens shoulder joints.',
-    reps: '10 each direction',
-    draw: drawArmCircle
-  },
-  {
-    id: 'squat',
-    name: 'Sit-to-Stand',
-    desc: 'Slowly stand up from a chair, then sit back down in a controlled way. Strengthens legs and improves balance.',
-    reps: '10 times',
-    draw: drawSitToStand
-  },
-  {
-    id: 'sidebend',
-    name: 'Side Bend Stretch',
-    desc: 'Stand tall, raise one arm overhead and gently lean to the opposite side. Hold 3 seconds each side.',
-    reps: '5 each side',
-    draw: drawSideBend
-  },
-  {
-    id: 'calfraise',
-    name: 'Calf Raises',
-    desc: 'Stand behind a chair for support. Rise up onto your toes, hold 2 seconds, then lower slowly.',
-    reps: '15 times',
-    draw: drawCalfRaise
-  }
+// ── KEYPOINTS (MoveNet) ──────────────────────
+// 0:nose 5:L_shoulder 6:R_shoulder 7:L_elbow 8:R_elbow
+// 9:L_wrist 10:R_wrist 11:L_hip 12:R_hip
+// 13:L_knee 14:R_knee 15:L_ankle 16:R_ankle
+const BONES = [
+  [0,5],[0,6],[5,6],[5,7],[7,9],[6,8],[8,10],
+  [5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]
 ];
 
-let currentProfile = 'mom';
-let currentExIdx = 0;
-let animFrame = null;
-let camStream = null;
-let animT = 0;
+function ok(kp, t=0.28) { return kp && kp.score >= t; }
 
-function getToday() {
-  return new Date().toISOString().split('T')[0];
+function normKps(kps, vw, vh) {
+  return kps.map(k => ({ ...k, x: k.x/vw, y: k.y/vh }));
 }
 
-function getData(profile) {
-  const raw = localStorage.getItem('extrack_' + profile);
-  if (!raw) return { streak: 0, lastDone: null, history: [] };
-  return JSON.parse(raw);
+function jointAngle(a, b, c) {
+  const v1x=a.x-b.x, v1y=a.y-b.y, v2x=c.x-b.x, v2y=c.y-b.y;
+  const dot=v1x*v2x+v1y*v2y;
+  const mag=Math.sqrt(v1x**2+v1y**2)*Math.sqrt(v2x**2+v2y**2);
+  if (!mag) return 180;
+  return Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI;
 }
 
-function saveData(profile, data) {
-  localStorage.setItem('extrack_' + profile, JSON.stringify(data));
+// ── DETECTORS ────────────────────────────────
+
+class MarchDetector {
+  constructor() { this.reset(); }
+  reset() { this.count=0; this.target=8; this.lUp=false; this.rUp=false; this.last=0; this.feedback='Lift each knee above hip height'; }
+  update(n) {
+    const now=Date.now(); if (now-this.last<350) return;
+    const lK=n[13],lH=n[11],rK=n[14],rH=n[12]; let hit=false;
+    if (ok(lK)&&ok(lH)) { const up=lH.y-lK.y>0.07; if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left knee up ✓';} if(!up)this.lUp=false; }
+    if (ok(rK)&&ok(rH)) { const up=rH.y-rK.y>0.07; if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right knee up ✓';} if(!up)this.rUp=false; }
+    if (hit) { this.count=Math.min(this.count+1,this.target); this.last=now; }
+    else if (!this.lUp&&!this.rUp&&this.count<this.target) this.feedback='March — lift knees higher';
+  }
+  get done() { return this.count>=this.target; }
+  get pct()  { return this.count/this.target; }
 }
 
-function isDoneToday(profile) {
-  return getData(profile).lastDone === getToday();
+class ArmRaiseDetector {
+  constructor() { this.reset(); }
+  reset() { this.count=0; this.target=6; this.lUp=false; this.rUp=false; this.last=0; this.feedback='Swing arms up in big circles'; }
+  update(n) {
+    const now=Date.now(); if(now-this.last<450) return;
+    const lW=n[9],lS=n[5],rW=n[10],rS=n[6]; let hit=false;
+    if(ok(lW)&&ok(lS)){const up=lS.y-lW.y>0.07;if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left arm up ✓';}if(!up)this.lUp=false;}
+    if(ok(rW)&&ok(rS)){const up=rS.y-rW.y>0.07;if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right arm up ✓';}if(!up)this.rUp=false;}
+    if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;}
+    else if(!this.lUp&&!this.rUp&&this.count<this.target)this.feedback='Raise wrists above shoulder height';
+  }
+  get done() { return this.count>=this.target; }
+  get pct()  { return this.count/this.target; }
 }
 
-function computeStreak(data) {
-  return data.streak || 0;
+class SitStandDetector {
+  constructor() { this.reset(); }
+  reset() { this.count=0; this.target=5; this.phase='unknown'; this.last=0; this.feedback='Sit in a chair then stand up fully'; }
+  update(n) {
+    const now=Date.now(); if(now-this.last<600) return;
+    let ang=null;
+    const lH=n[11],lK=n[13],lA=n[15],rH=n[12],rK=n[14],rA=n[16];
+    if(ok(lH)&&ok(lK)&&ok(lA)) ang=jointAngle(lH,lK,lA);
+    else if(ok(rH)&&ok(rK)&&ok(rA)) ang=jointAngle(rH,rK,rA);
+    if(ang===null) return;
+    if(ang<130&&this.phase!=='sitting') { this.phase='sitting'; this.last=now; this.feedback='Knees bent — now stand up!'; }
+    else if(ang>160&&this.phase==='sitting') { this.phase='standing'; this.count=Math.min(this.count+1,this.target); this.last=now; this.feedback='Stood up ✓ — sit back down'; }
+    else if(this.phase!=='sitting'&&this.count<this.target) this.feedback='Sit down first, then stand tall';
+  }
+  get done() { return this.count>=this.target; }
+  get pct()  { return this.count/this.target; }
 }
 
-// ──────────────────────────────────────────────
-// HOME
-// ──────────────────────────────────────────────
+class SideBendDetector {
+  constructor() { this.reset(); }
+  reset() { this.count=0; this.target=6; this.neutral=true; this.last=0; this.feedback='Lean clearly to one side with arm overhead'; }
+  update(n) {
+    const now=Date.now(); if(now-this.last<500) return;
+    const lS=n[5],rS=n[6],lH=n[11],rH=n[12];
+    if(!ok(lS)||!ok(rS)||!ok(lH)||!ok(rH)) return;
+    const shX=(lS.x+rS.x)/2, hipX=(lH.x+rH.x)/2, off=Math.abs(shX-hipX);
+    if(off>0.08&&this.neutral) { this.neutral=false; this.count=Math.min(this.count+1,this.target); this.last=now; this.feedback='Good bend ✓ — now lean the other way'; }
+    else if(off<0.04&&!this.neutral) this.neutral=true;
+    else if(this.count<this.target) this.feedback=off>0.04?'Lean a bit further…':'Lean clearly to one side';
+  }
+  get done() { return this.count>=this.target; }
+  get pct()  { return this.count/this.target; }
+}
+
+class CalfRaiseDetector {
+  // Tracks average shoulder Y as a body-height proxy.
+  // Rising on tiptoes lifts the whole body, so shoulder Y decreases.
+  constructor() { this.reset(); }
+  reset() { this.count=0; this.target=8; this.hist=[]; this.raised=false; this.last=0; this.feedback='Rise up onto your tiptoes'; }
+  update(n) {
+    const now=Date.now();
+    const lS=n[5],rS=n[6];
+    if(!ok(lS)&&!ok(rS)) return;
+    const shY=(ok(lS)&&ok(rS))?(lS.y+rS.y)/2:(ok(lS)?lS.y:rS.y);
+    this.hist.push({t:now,y:shY});
+    this.hist=this.hist.filter(h=>now-h.t<3000);
+    if(this.hist.length<8) return;
+    const sorted=[...this.hist].sort((a,b)=>a.y-b.y);
+    const baseline=sorted[Math.floor(sorted.length*0.6)].y;
+    const isUp=shY<baseline-0.025;
+    if(now-this.last<400) return;
+    if(isUp&&!this.raised) { this.raised=true; this.count=Math.min(this.count+1,this.target); this.last=now; this.feedback='Tiptoes ✓ — lower back down'; }
+    else if(!isUp&&this.raised) { this.raised=false; if(this.count<this.target)this.feedback='Rise up on tiptoes again'; }
+    else if(!isUp&&this.count<this.target) this.feedback='Rise up slowly onto tiptoes';
+  }
+  get done() { return this.count>=this.target; }
+  get pct()  { return this.count/this.target; }
+}
+
+// ── EXERCISES ────────────────────────────────
+const EXERCISES = [
+  { id:'march',    name:'Standing March',    desc:'Lift knees alternately above hip height. Keep back straight, arms swinging. (8 knee raises)',    Det:MarchDetector,    draw:drawMarch },
+  { id:'armcirc',  name:'Arm Circles',       desc:'Make large arm circles, raising wrists above shoulder height on each revolution. (6 arm raises)',  Det:ArmRaiseDetector, draw:drawArmCircle },
+  { id:'sitstand', name:'Sit-to-Stand',      desc:'Start seated in a chair. Stand up until knees are fully straight, then sit back down. (5 stands)', Det:SitStandDetector, draw:drawSitToStand },
+  { id:'sidebend', name:'Side Bend Stretch', desc:'Raise one arm and lean your torso clearly to the opposite side. Alternate. (6 bends)',             Det:SideBendDetector, draw:drawSideBend },
+  { id:'calfrise', name:'Calf Raises',       desc:'Hold a chair for balance. Rise slowly onto tiptoes, hold briefly, lower down. (8 raises)',         Det:CalfRaiseDetector,draw:drawCalfRaise }
+];
+
+// ── STATE ────────────────────────────────────
+let profile='mom', exIdx=0, dets=[], raf=null, animT=0, camStream=null, poseDetector=null, cvReady=false;
+
+// ── STORAGE ──────────────────────────────────
+const today=()=>new Date().toISOString().split('T')[0];
+const getData=p=>JSON.parse(localStorage.getItem('extrack_'+p)||'{"streak":0,"lastDone":null}');
+const saveData=(p,d)=>localStorage.setItem('extrack_'+p,JSON.stringify(d));
+const doneToday=p=>getData(p).lastDone===today();
+
 function refreshHome() {
-  ['mom', 'dad'].forEach(p => {
-    const data = getData(p);
-    const streak = computeStreak(data);
-    document.getElementById(p + '-streak-mini').textContent =
-      streak === 1 ? '1 day streak' : streak + ' day streak';
-    const badge = document.getElementById(p + '-done-badge');
-    badge.style.display = isDoneToday(p) ? 'inline-block' : 'none';
+  ['mom','dad'].forEach(p=>{
+    const d=getData(p);
+    document.getElementById(p+'-streak-mini').textContent=(d.streak||0)+' day streak';
+    document.getElementById(p+'-done-badge').style.display=doneToday(p)?'inline-block':'none';
   });
 }
 
-function openProfile(profile) {
-  currentProfile = profile;
-  currentExIdx = 0;
-
-  document.getElementById('profile-name').textContent =
-    profile === 'mom' ? 'Mom 👩' : 'Dad 👨';
-  document.getElementById('profile-date').textContent =
-    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
-
-  const data = getData(profile);
-  document.getElementById('streak-num').textContent = computeStreak(data);
-
-  const doneBtn = document.getElementById('done-btn');
-  if (isDoneToday(profile)) {
-    doneBtn.textContent = '✓ Already done today!';
-    doneBtn.disabled = true;
-  } else {
-    doneBtn.textContent = '✓ Mark All Done for Today';
-    doneBtn.disabled = false;
-  }
-
+// ── PROFILE ──────────────────────────────────
+async function openProfile(p) {
+  profile=p; exIdx=0;
+  dets=EXERCISES.map(e=>new e.Det());
+  document.getElementById('profile-name').textContent=p==='mom'?'Mom 👩':'Dad 👨';
+  document.getElementById('profile-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('streak-num').textContent=getData(p).streak||0;
   document.getElementById('home').classList.remove('active');
   document.getElementById('exercise').classList.add('active');
-
-  document.getElementById('cam-overlay').classList.remove('hidden');
-
-  renderExercise();
-  startAnimation();
+  renderEx(); renderDots(); updateBtn();
+  await initCV();
 }
 
 function goHome() {
-  stopCamera();
-  stopAnimation();
+  stopCV(); stopRaf();
   document.getElementById('exercise').classList.remove('active');
   document.getElementById('home').classList.add('active');
   refreshHome();
 }
 
-// ──────────────────────────────────────────────
-// EXERCISE NAV
-// ──────────────────────────────────────────────
-function renderExercise() {
-  const ex = EXERCISES[currentExIdx];
-  document.getElementById('ex-name').textContent = ex.name;
-  document.getElementById('ex-desc').textContent = ex.desc + '  (' + ex.reps + ')';
-  document.getElementById('ex-counter').textContent =
-    (currentExIdx + 1) + ' / ' + EXERCISES.length;
-}
-
-function nextExercise() {
-  currentExIdx = (currentExIdx + 1) % EXERCISES.length;
-  animT = 0;
-  renderExercise();
-}
-
-function prevExercise() {
-  currentExIdx = (currentExIdx - 1 + EXERCISES.length) % EXERCISES.length;
-  animT = 0;
-  renderExercise();
-}
-
-// ──────────────────────────────────────────────
-// CAMERA
-// ──────────────────────────────────────────────
-async function startCamera() {
+// ── CV INIT ───────────────────────────────────
+async function initCV() {
+  const overlay=document.getElementById('model-overlay');
+  const dot=document.getElementById('cv-dot');
+  const txt=document.getElementById('cv-text');
+  overlay.classList.remove('hidden'); cvReady=false;
   try {
-    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-    const vid = document.getElementById('camera-feed');
-    vid.srcObject = camStream;
-    vid.onloadedmetadata = () => vid.play();
-    vid.classList.add('on');
-    document.getElementById('cam-placeholder').style.display = 'none';
-    document.getElementById('cam-overlay').classList.add('hidden');
-  } catch(e) {
-    document.getElementById('cam-overlay').classList.add('hidden');
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    const vid=document.getElementById('camera-feed');
+    vid.srcObject=camStream;
+    await new Promise(res=>{vid.onloadedmetadata=()=>{vid.play();res();};});
+    txt.textContent='Loading MoveNet model…';
+    if(!poseDetector) {
+      poseDetector=await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        {modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING}
+      );
+    }
+    overlay.classList.add('hidden');
+    cvReady=true; dot.className='cv-dot on';
+    txt.textContent='Pose detection active — do your exercise!';
+    startRaf();
+  } catch(err) {
+    console.warn('CV init failed:',err);
+    overlay.innerHTML=`<div style="font-size:1.5rem">⚠️</div><h3>Camera blocked</h3>
+      <p style="color:#fc8181">Camera access is required to verify exercises and save streaks.</p>
+      <button onclick="goHome()" style="margin-top:1rem;padding:10px 24px;border-radius:10px;border:none;background:white;font-weight:600;cursor:pointer">Go Back</button>`;
   }
 }
 
-function dismissCamera() {
-  document.getElementById('cam-overlay').classList.add('hidden');
+function stopCV() {
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const vid=document.getElementById('camera-feed');
+  if(vid) vid.srcObject=null;
+  cvReady=false;
+  document.getElementById('model-overlay').classList.remove('hidden');
 }
 
-function stopCamera() {
-  if (camStream) {
-    camStream.getTracks().forEach(t => t.stop());
-    camStream = null;
-  }
-  const vid = document.getElementById('camera-feed');
-  vid.srcObject = null;
-  vid.classList.remove('on');
-}
+// ── ANIMATION + DETECTION LOOP ───────────────
+function startRaf() {
+  const canvas=document.getElementById('stick-canvas');
+  const zone=document.getElementById('camera-zone');
+  const resize=()=>{canvas.width=zone.clientWidth;canvas.height=zone.clientHeight;};
+  resize(); window.addEventListener('resize',resize);
 
-// ──────────────────────────────────────────────
-// STICK FIGURE ANIMATION
-// ──────────────────────────────────────────────
-function startAnimation() {
-  const canvas = document.getElementById('stick-canvas');
-  const zone = document.getElementById('camera-zone');
+  async function loop() {
+    animT+=0.025;
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  function resize() {
-    canvas.width = zone.clientWidth;
-    canvas.height = zone.clientHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
+    if(cvReady&&poseDetector) {
+      const vid=document.getElementById('camera-feed');
+      if(vid.readyState>=2) {
+        try {
+          const poses=await poseDetector.estimatePoses(vid,{flipHorizontal:false});
+          if(poses.length>0) {
+            const kps=poses[0].keypoints;
+            const vw=vid.videoWidth||canvas.width, vh=vid.videoHeight||canvas.height;
+            const nkps=normKps(kps,vw,vh);
+            dets[exIdx].update(nkps);
+            updateCvStrip(); updateBtn(); renderDots();
+            drawSkeleton(ctx,kps,canvas.width,canvas.height,vw,vh);
+          }
+        } catch(_){}
+      }
+    }
 
-  function loop() {
-    animT += 0.025;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    EXERCISES[currentExIdx].draw(ctx, canvas.width, canvas.height, animT);
-    animFrame = requestAnimationFrame(loop);
+    EXERCISES[exIdx].draw(ctx,canvas.width,canvas.height,animT);
+    raf=requestAnimationFrame(loop);
   }
   loop();
 }
 
-function stopAnimation() {
-  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-}
+function stopRaf() { if(raf){cancelAnimationFrame(raf);raf=null;} }
 
-// Shared stick-figure drawing helpers
-function drawStick(ctx, cx, cy, scale, parts) {
-  // parts: { headY, neckY, shoulderY, hipY, leftElbow, leftHand, rightElbow, rightHand, leftKnee, leftFoot, rightKnee, rightFoot }
-  const s = scale;
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 3 * (scale / 60);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  const p = parts;
-  const c = (x, y) => [cx + x * s, cy + y * s];
-
-  // head
-  ctx.beginPath();
-  ctx.arc(...c(0, p.headY - 0.5), 0.5 * s, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.fill();
-
-  // spine
-  ln(ctx, c(0, p.neckY), c(0, p.hipY));
-
-  // arms
-  ln(ctx, c(0, p.shoulderY), c(p.leftElbow[0], p.leftElbow[1]));
-  ln(ctx, c(p.leftElbow[0], p.leftElbow[1]), c(p.leftHand[0], p.leftHand[1]));
-  ln(ctx, c(0, p.shoulderY), c(p.rightElbow[0], p.rightElbow[1]));
-  ln(ctx, c(p.rightElbow[0], p.rightElbow[1]), c(p.rightHand[0], p.rightHand[1]));
-
-  // legs
-  ln(ctx, c(0, p.hipY), c(p.leftKnee[0], p.leftKnee[1]));
-  ln(ctx, c(p.leftKnee[0], p.leftKnee[1]), c(p.leftFoot[0], p.leftFoot[1]));
-  ln(ctx, c(0, p.hipY), c(p.rightKnee[0], p.rightKnee[1]));
-  ln(ctx, c(p.rightKnee[0], p.rightKnee[1]), c(p.rightFoot[0], p.rightFoot[1]));
-}
-
-function ln(ctx, a, b) {
-  ctx.beginPath();
-  ctx.moveTo(...a);
-  ctx.lineTo(...b);
-  ctx.stroke();
-}
-
-// EXERCISE DRAWINGS
-function drawMarch(ctx, W, H, t) {
-  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
-  const phase = Math.sin(t * 3);
-  const lKneeY = 2.5 - Math.max(0, phase) * 1.2;
-  const rKneeY = 2.5 + Math.max(0, -phase) * 1.2;
-  drawStick(ctx, cx, cy, s, {
-    headY: -3.5,
-    neckY: -3,
-    shoulderY: -2.3,
-    hipY: 0,
-    leftElbow: [-0.8 - phase * 0.3, -1.5 + phase * 0.3],
-    leftHand: [-1.2 - phase * 0.5, -2.5 + phase * 0.5],
-    rightElbow: [0.8 + phase * 0.3, -1.5 - phase * 0.3],
-    rightHand: [1.2 + phase * 0.5, -2.5 - phase * 0.5],
-    leftKnee: [-0.5, lKneeY],
-    leftFoot: [-0.6, lKneeY + 1.2],
-    rightKnee: [0.5, rKneeY],
-    rightFoot: [0.6, rKneeY + 1.2]
-  });
-  label(ctx, cx, cy - s * 4.2, 'March in place!');
-}
-
-function drawArmCircle(ctx, W, H, t) {
-  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
-  const a = t * 2;
-  drawStick(ctx, cx, cy, s, {
-    headY: -3.5,
-    neckY: -3,
-    shoulderY: -2.3,
-    hipY: 0,
-    leftElbow: [-1 + Math.cos(a + Math.PI) * 0.8, -2.3 + Math.sin(a + Math.PI) * 0.8],
-    leftHand: [-1 + Math.cos(a + Math.PI) * 1.6, -2.3 + Math.sin(a + Math.PI) * 1.6],
-    rightElbow: [1 + Math.cos(a) * 0.8, -2.3 + Math.sin(a) * 0.8],
-    rightHand: [1 + Math.cos(a) * 1.6, -2.3 + Math.sin(a) * 1.6],
-    leftKnee: [-0.5, 1.5],
-    leftFoot: [-0.6, 2.8],
-    rightKnee: [0.5, 1.5],
-    rightFoot: [0.6, 2.8]
-  });
-  label(ctx, cx, cy - s * 4.2, 'Arm circles!');
-}
-
-function drawSitToStand(ctx, W, H, t) {
-  const cx = W * 0.75, cy = H * 0.5, s = Math.min(W, H) * 0.09;
-  const phase = (Math.sin(t * 1.5) + 1) / 2;
-  const bend = phase * 1.2;
-  const rise = -phase * 1.5;
-  drawStick(ctx, cx, cy + rise * s, s, {
-    headY: -3.5,
-    neckY: -3,
-    shoulderY: -2.3,
-    hipY: bend,
-    leftElbow: [-0.8, -1.3],
-    leftHand: [-1.2, -0.5],
-    rightElbow: [0.8, -1.3],
-    rightHand: [1.2, -0.5],
-    leftKnee: [-0.5, bend + 1.5 - bend * 0.5],
-    leftFoot: [-0.7, bend + 2.5],
-    rightKnee: [0.5, bend + 1.5 - bend * 0.5],
-    rightFoot: [0.7, bend + 2.5]
-  });
-  label(ctx, cx, cy - s * 4.5, 'Sit to stand!');
-}
-
-function drawSideBend(ctx, W, H, t) {
-  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
-  const lean = Math.sin(t * 1.2) * 0.6;
-  drawStick(ctx, cx, cy, s, {
-    headY: -3.5 + lean * 0.3,
-    neckY: -3 + lean * 0.2,
-    shoulderY: -2.3,
-    hipY: 0,
-    leftElbow: [-0.8, -1.8],
-    leftHand: [-1 + lean * 1.5, -3.5 + lean * 0.5],
-    rightElbow: [0.6, -1.5],
-    rightHand: [0.8, -0.8],
-    leftKnee: [-0.5, 1.5],
-    leftFoot: [-0.6, 2.8],
-    rightKnee: [0.5, 1.5],
-    rightFoot: [0.6, 2.8]
-  });
-  label(ctx, cx, cy - s * 4.5, 'Side bend stretch!');
-}
-
-function drawCalfRaise(ctx, W, H, t) {
-  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
-  const rise = (Math.sin(t * 2) + 1) / 2 * 0.6;
-  drawStick(ctx, cx, cy - rise * s, s, {
-    headY: -3.5,
-    neckY: -3,
-    shoulderY: -2.3,
-    hipY: 0,
-    leftElbow: [-1.2, -1.5],
-    leftHand: [-1.5, -0.5],
-    rightElbow: [1.2, -1.5],
-    rightHand: [1.5, -0.5],
-    leftKnee: [-0.5, 1.6],
-    leftFoot: [-0.5, 2.5 - rise * 0.5],
-    rightKnee: [0.5, 1.6],
-    rightFoot: [0.5, 2.5 - rise * 0.5]
-  });
-  label(ctx, cx, cy - s * 4.5 - rise * s, 'Calf raises!');
-}
-
-function label(ctx, x, y, text) {
-  ctx.save();
-  ctx.font = 'bold 15px -apple-system, sans-serif';
-  ctx.textAlign = 'center';
-  const w = ctx.measureText(text).width + 20;
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.beginPath();
-  ctx.roundRect(x - w/2, y - 16, w, 26, 6);
-  ctx.fill();
-  ctx.fillStyle = 'white';
-  ctx.fillText(text, x, y + 4);
-  ctx.restore();
-}
-
-// ──────────────────────────────────────────────
-// MARK DONE
-// ──────────────────────────────────────────────
-function markDone() {
-  const data = getData(currentProfile);
-  const today = getToday();
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-  if (data.lastDone === today) return;
-
-  if (data.lastDone === yesterday) {
-    data.streak = (data.streak || 0) + 1;
-  } else {
-    data.streak = 1;
+// ── SKELETON OVERLAY ──────────────────────────
+function drawSkeleton(ctx,kps,cw,ch,vw,vh) {
+  // Video is CSS-mirrored; canvas is not — flip x to match
+  const sx=cw/vw, sy=ch/vh;
+  const fx=x=>cw-x*sx, fy=y=>y*sy;
+  const MIN=0.3;
+  ctx.strokeStyle='rgba(72,187,120,0.75)'; ctx.lineWidth=2.5; ctx.lineCap='round';
+  for(const[i,j]of BONES){
+    const a=kps[i],b=kps[j];
+    if(!a||!b||a.score<MIN||b.score<MIN) continue;
+    ctx.beginPath(); ctx.moveTo(fx(a.x),fy(a.y)); ctx.lineTo(fx(b.x),fy(b.y)); ctx.stroke();
   }
-  data.lastDone = today;
-  data.history = data.history || [];
-  data.history.push(today);
-
-  saveData(currentProfile, data);
-
-  document.getElementById('streak-num').textContent = data.streak;
-  document.getElementById('done-btn').textContent = '✓ Done today!';
-  document.getElementById('done-btn').disabled = true;
-
-  showCelebration(data.streak, currentProfile);
+  for(const k of kps){
+    if(k.score<MIN) continue;
+    ctx.beginPath(); ctx.arc(fx(k.x),fy(k.y),4,0,Math.PI*2);
+    ctx.fillStyle=k.score>0.6?'rgba(72,187,120,0.95)':'rgba(72,187,120,0.5)'; ctx.fill();
+  }
 }
 
-// ──────────────────────────────────────────────
-// CELEBRATION
-// ──────────────────────────────────────────────
-function showCelebration(streak, profile) {
-  const cel = document.getElementById('celebration');
-  document.getElementById('cel-streak').textContent = '🔥 ' + streak;
-  document.getElementById('cel-title').textContent =
-    profile === 'mom' ? 'Great job, Mom!' : 'Great job, Dad!';
-  document.getElementById('cel-desc').textContent =
-    streak === 1
-      ? 'Day 1 — the streak begins! Come back tomorrow!'
-      : streak + ' days in a row! Keep it going!';
+// ── UI ────────────────────────────────────────
+function renderEx() {
+  const ex=EXERCISES[exIdx];
+  document.getElementById('ex-name').textContent=ex.name;
+  document.getElementById('ex-desc').textContent=ex.desc;
+  document.getElementById('ex-counter').textContent=(exIdx+1)+' / '+EXERCISES.length;
+  updateProgress();
+}
 
-  const area = document.getElementById('confetti-area');
-  area.innerHTML = '';
-  const colors = ['#f6ad55','#68d391','#63b3ed','#fc8181','#b794f4','#fefcbf'];
-  for (let i = 0; i < 60; i++) {
-    const el = document.createElement('div');
-    const size = 8 + Math.random() * 10;
-    el.style.cssText = `
-      position:absolute;
-      width:${size}px; height:${size}px;
-      background:${colors[Math.floor(Math.random()*colors.length)]};
-      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
-      left:${Math.random() * 100}%;
-      top:-20px;
-      opacity:0.9;
-      animation: fall ${1.5 + Math.random() * 2}s linear ${Math.random() * 0.8}s forwards;
-    `;
+function renderDots() {
+  const wrap=document.getElementById('ex-dots'); wrap.innerHTML='';
+  EXERCISES.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='ex-dot'+(i===exIdx?' cur':'')+(dets[i]?.done?' ok':'');
+    wrap.appendChild(d);
+  });
+}
+
+function updateProgress() {
+  const det=dets[exIdx]; const pct=det?Math.round(det.pct*100):0;
+  const bar=document.getElementById('progress-fill');
+  bar.style.width=pct+'%'; bar.className='progress-fill'+(det?.done?' done':'');
+}
+
+function updateCvStrip() {
+  const det=dets[exIdx]; if(!det) return;
+  document.getElementById('cv-text').textContent=det.done?'✓ Exercise complete!':det.feedback;
+  document.getElementById('cv-reps').textContent=det.count+' / '+det.target;
+  updateProgress();
+}
+
+function updateBtn() {
+  const btn=document.getElementById('done-btn');
+  if(doneToday(profile)){btn.textContent='✓ Already done today!';btn.disabled=true;return;}
+  const rem=dets.filter(d=>!d.done).length;
+  if(rem===0){btn.textContent='✓ All verified — Save Streak!';btn.disabled=false;}
+  else{btn.textContent=rem+' exercise'+(rem>1?'s':'')+' remaining';btn.disabled=true;}
+}
+
+function nextEx(){exIdx=(exIdx+1)%EXERCISES.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
+function prevEx(){exIdx=(exIdx-1+EXERCISES.length)%EXERCISES.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
+
+// ── MARK DONE ────────────────────────────────
+function markDone() {
+  if(!dets.every(d=>d.done)) return;
+  const d=getData(profile);
+  const yest=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  d.streak=d.lastDone===yest?(d.streak||0)+1:1;
+  d.lastDone=today(); saveData(profile,d);
+  document.getElementById('streak-num').textContent=d.streak;
+  showCel(d.streak,profile);
+}
+
+// ── CELEBRATION ──────────────────────────────
+function showCel(streak,p) {
+  document.getElementById('cel-streak').textContent='🔥 '+streak;
+  document.getElementById('cel-title').textContent=p==='mom'?'Great job, Mom!':'Great job, Dad!';
+  document.getElementById('cel-desc').textContent=streak===1?'Day 1 complete — come back tomorrow!':streak+' days in a row — keep going!';
+  const area=document.getElementById('confetti-area'); area.innerHTML='';
+  const cols=['#f6ad55','#68d391','#63b3ed','#fc8181','#b794f4','#fefcbf'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'),sz=8+Math.random()*10;
+    el.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};
+      border-radius:${Math.random()>.5?'50%':'2px'};left:${Math.random()*100}%;top:-20px;
+      animation:fall ${1.5+Math.random()*2}s linear ${Math.random()*.8}s forwards;`;
     area.appendChild(el);
   }
-
-  if (!document.getElementById('confetti-style')) {
-    const st = document.createElement('style');
-    st.id = 'confetti-style';
-    st.textContent = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity:0; } }`;
-    document.head.appendChild(st);
-  }
-
-  cel.classList.add('show');
+  if(!document.getElementById('cfall')){const s=document.createElement('style');s.id='cfall';s.textContent='@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}';document.head.appendChild(s);}
+  document.getElementById('celebration').classList.add('show');
 }
 
-function closeCelebration() {
-  document.getElementById('celebration').classList.remove('show');
-  goHome();
+function closeCel(){document.getElementById('celebration').classList.remove('show');goHome();}
+
+// ── STICK FIGURE GUIDES ───────────────────────
+function drawStick(ctx,cx,cy,s,p){
+  ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=3*(s/60);ctx.lineCap='round';ctx.lineJoin='round';
+  const c=(x,y)=>[cx+x*s,cy+y*s];
+  ctx.beginPath();ctx.arc(...c(0,p.headY-0.5),0.5*s,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.45)';ctx.fill();
+  const ln=(a,b)=>{ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();};
+  ln(c(0,p.neckY),c(0,p.hipY));
+  ln(c(0,p.shoulderY),c(...p.lEl));ln(c(...p.lEl),c(...p.lWr));
+  ln(c(0,p.shoulderY),c(...p.rEl));ln(c(...p.rEl),c(...p.rWr));
+  ln(c(0,p.hipY),c(...p.lKn));ln(c(...p.lKn),c(...p.lFt));
+  ln(c(0,p.hipY),c(...p.rKn));ln(c(...p.rKn),c(...p.rFt));
+}
+function glbl(ctx,x,y,text){
+  ctx.save();ctx.font='bold 13px -apple-system,sans-serif';ctx.textAlign='center';
+  const w=ctx.measureText(text).width+18;
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.beginPath();ctx.roundRect(x-w/2,y-13,w,21,5);ctx.fill();
+  ctx.fillStyle='white';ctx.fillText(text,x,y+3);ctx.restore();
 }
 
-// ──────────────────────────────────────────────
-// INIT
-// ──────────────────────────────────────────────
+function drawMarch(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,ph=Math.sin(t*3);
+  const lKY=2.5-Math.max(0,ph)*1.5,rKY=2.5+Math.max(0,-ph)*1.5;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    lEl:[-0.8-ph*.3,-1.5+ph*.3],lWr:[-1.2-ph*.5,-2.5+ph*.5],
+    rEl:[0.8+ph*.3,-1.5-ph*.3],rWr:[1.2+ph*.5,-2.5-ph*.5],
+    lKn:[-0.5,lKY],lFt:[-0.6,lKY+1.2],rKn:[0.5,rKY],rFt:[0.6,rKY+1.2]});
+  glbl(ctx,cx,cy-s*4.2,'Lift knees!');
+}
+function drawArmCircle(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,a=t*2;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    lEl:[-1+Math.cos(a+Math.PI)*.8,-2.3+Math.sin(a+Math.PI)*.8],lWr:[-1+Math.cos(a+Math.PI)*1.6,-2.3+Math.sin(a+Math.PI)*1.6],
+    rEl:[1+Math.cos(a)*.8,-2.3+Math.sin(a)*.8],rWr:[1+Math.cos(a)*1.6,-2.3+Math.sin(a)*1.6],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Circle arms!');
+}
+function drawSitToStand(ctx,W,H,t){
+  const cx=W*.78,cy=H*.46,s=Math.min(W,H)*.09;
+  const ph=(Math.sin(t*1.5)+1)/2,bend=ph*1.2,rise=-ph*1.5;
+  drawStick(ctx,cx,cy+rise*s,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:bend,
+    lEl:[-0.8,-1.3],lWr:[-1.2,-0.5],rEl:[0.8,-1.3],rWr:[1.2,-0.5],
+    lKn:[-0.5,bend+1.5-bend*.5],lFt:[-0.7,bend+2.5],rKn:[0.5,bend+1.5-bend*.5],rFt:[0.7,bend+2.5]});
+  glbl(ctx,cx,cy-s*4.8,'Stand up fully!');
+}
+function drawSideBend(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,lean=Math.sin(t*1.2)*.6;
+  drawStick(ctx,cx,cy,s,{headY:-3.5+lean*.3,neckY:-3+lean*.2,shoulderY:-2.3,hipY:0,
+    lEl:[-0.8,-1.8],lWr:[-1+lean*1.5,-3.5+lean*.5],rEl:[0.6,-1.5],rWr:[0.8,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.5,'Lean side to side!');
+}
+function drawCalfRaise(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,rise=(Math.sin(t*2)+1)/2*.6;
+  drawStick(ctx,cx,cy-rise*s,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    lEl:[-1.2,-1.5],lWr:[-1.5,-0.5],rEl:[1.2,-1.5],rWr:[1.5,-0.5],
+    lKn:[-0.5,1.6],lFt:[-0.5,2.5-rise*.5],rKn:[0.5,1.6],rFt:[0.5,2.5-rise*.5]});
+  glbl(ctx,cx,cy-s*4.5-rise*s,'Rise on tiptoes!');
+}
+
 refreshHome();
 </script>
 </body>

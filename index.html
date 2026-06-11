@@ -8,48 +8,61 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Exercises">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="manifest" href="manifest.json">
 <title>Daily Exercise Tracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;color:#1a202c;overscroll-behavior:none;}
+button{min-height:56px;font-size:16px;padding:0 24px;}
 .screen{display:none;min-height:100vh;min-height:100dvh;}
 .screen.active{display:flex;flex-direction:column;}
 
 /* ── HOME ── */
 #home{align-items:center;justify-content:center;padding:2rem 1.5rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);}
-.home-top{width:100%;max-width:480px;display:flex;justify-content:flex-end;margin-bottom:0.5rem;}
-.sens-btn{background:rgba(255,255,255,0.15);border:none;color:white;border-radius:20px;padding:6px 14px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:5px;}
-.sens-btn .badge{background:rgba(255,255,255,0.25);border-radius:10px;padding:2px 8px;font-size:0.72rem;font-weight:600;}
+.home-top{width:100%;max-width:480px;display:flex;justify-content:flex-end;gap:0.75rem;margin-bottom:0.75rem;flex-wrap:wrap;}
+.sens-btn{background:rgba(255,255,255,0.18);border:none;color:white;border-radius:24px;padding:14px 22px;font-size:1rem;min-height:56px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:transform 0.15s;}
+.sens-btn .badge{background:rgba(255,255,255,0.28);border-radius:12px;padding:4px 10px;font-size:0.82rem;font-weight:700;}
 .home-header{text-align:center;color:white;margin-bottom:2rem;}
-.home-header h1{font-size:2.2rem;font-weight:700;margin-bottom:0.4rem;}
-.home-header p{font-size:1rem;opacity:0.85;}
+.home-header h1{font-size:2.6rem;font-weight:800;margin-bottom:0.4rem;}
+.home-header p{font-size:1.05rem;opacity:0.95;}
 .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;width:100%;max-width:480px;}
-.profile-card{background:white;border-radius:20px;padding:1.8rem 1.2rem;text-align:center;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 4px 20px rgba(0,0,0,0.15);user-select:none;}
-.profile-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.2);}
-.profile-card:active{transform:scale(0.97);}
-.profile-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 0.8rem;display:flex;align-items:center;justify-content:center;font-size:2.2rem;}
+.profile-card{background:white;border-radius:24px;padding:1.8rem 1.4rem;text-align:center;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 4px 24px rgba(0,0,0,0.16);user-select:none;min-height:160px;}
+.profile-card:hover{transform:translateY(-4px);box-shadow:0 10px 36px rgba(0,0,0,0.2);}
+.profile-card:active{transform:scale(0.98);}
+.profile-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 0.8rem;display:flex;align-items:center;justify-content:center;font-size:2.4rem;}
 .avatar-mom{background:#fed7e2;} .avatar-dad{background:#bee3f8;}
-.profile-card h2{font-size:1.2rem;font-weight:600;margin-bottom:0.3rem;}
-.streak-row{font-size:0.82rem;color:#718096;display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;}
+.profile-card h2{font-size:1.3rem;font-weight:700;margin-bottom:0.3rem;}
+.streak-row{font-size:1.05rem;color:#2d3748;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;}
+#mom-streak,#dad-streak{font-size:3rem;font-weight:800;color:#1a202c;}
 .week-dots{display:flex;gap:3px;justify-content:center;margin-bottom:6px;}
 .wdot{width:7px;height:7px;border-radius:50%;background:#e2e8f0;}
 .wdot.hit{background:#48bb78;}
 .wdot.today{background:#667eea;}
 .done-badge{display:inline-block;background:#c6f6d5;color:#276749;font-size:0.72rem;font-weight:600;padding:2px 10px;border-radius:20px;}
-.best-streak{font-size:0.72rem;color:#a0aec0;}
+.best-streak{font-size:1rem;color:#4a5568;font-weight:800;}
+
+/* ── INSTRUCTIONS ── */
+#instructions{background:#1a202c;color:white;align-items:center;justify-content:center;padding:1.5rem;}
+.instructions-card{width:100%;max-width:520px;text-align:center;}
+.instructions-canvas-wrap{position:relative;width:100%;aspect-ratio:4/3;background:#111827;border-radius:18px;overflow:hidden;margin:1.2rem 0;border:1px solid rgba(255,255,255,0.12);}
+#instructions-canvas{width:100%;height:100%;}
+.instructions-title{font-size:1.8rem;font-weight:800;margin-bottom:0.5rem;}
+.instructions-text{font-size:1.05rem;color:#cbd5e0;line-height:1.5;margin-bottom:1.2rem;}
+.start-camera-btn{width:100%;background:#48bb78;color:white;border:none;border-radius:16px;font-weight:800;cursor:pointer;}
+.instructions-back{margin-top:0.8rem;width:100%;background:#4a5568;color:white;border:none;border-radius:16px;font-weight:700;cursor:pointer;}
 
 /* ── EXERCISE ── */
 #exercise{background:#1a202c;color:white;}
 .ex-topbar{display:flex;align-items:center;padding:1rem 1.2rem;background:#2d3748;gap:1rem;flex-shrink:0;padding-top:max(1rem,env(safe-area-inset-top));}
-.back-btn{background:rgba(255,255,255,0.1);border:none;color:white;min-width:36px;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.back-btn{background:rgba(255,255,255,0.12);border:none;color:white;min-width:56px;width:56px;height:56px;border-radius:18px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .topbar-info{flex:1;}
-.topbar-info h2{font-size:1.05rem;font-weight:600;}
-.topbar-info p{font-size:0.78rem;color:#a0aec0;}
-.streak-badge{background:linear-gradient(135deg,#f6ad55,#ed8936);border-radius:12px;padding:5px 12px;text-align:center;flex-shrink:0;}
-.streak-badge .num{font-size:1.3rem;font-weight:700;line-height:1;}
-.streak-badge .lbl{font-size:0.62rem;opacity:0.9;}
+.topbar-info h2{font-size:1.3rem;font-weight:700;}
+.topbar-info p{font-size:0.9rem;color:#cbd5e0;}
+.streak-badge{background:linear-gradient(135deg,#f6ad55,#ed8936);border-radius:16px;padding:10px 16px;text-align:center;flex-shrink:0;}
+.streak-badge .num{font-size:1.8rem;font-weight:800;line-height:1;}
+.streak-badge .lbl{font-size:0.72rem;opacity:0.95;}
 
 .ex-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
 
@@ -58,12 +71,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #camera-feed{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
 #stick-canvas{position:absolute;inset:0;width:100%;height:100%;}
 
-/* Body-warning chip */
-.body-warn{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fef08a;font-size:0.78rem;font-weight:600;padding:5px 14px;border-radius:20px;white-space:nowrap;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:5;}
-.body-warn.show{opacity:1;}
+/* Body-warning banner */
+.body-warn{position:absolute;top:96px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:calc(100% - 40px);background:rgba(127,29,29,0.94);border:3px solid rgba(252,129,129,0.96);color:white;font-size:1.1rem;font-weight:800;padding:14px 18px;border-radius:16px;text-align:center;opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;z-index:7;}
+.body-warn.show{opacity:1;transform:translateX(-50%) translateY(2px);animation:pulseWarn 1.1s ease-in-out infinite;}
+@keyframes pulseWarn{0%,100%{box-shadow:0 0 0 0 rgba(252,129,129,0.65)}50%{box-shadow:0 0 0 8px rgba(252,129,129,0)}}
+
+.overlay-counter{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:white;font-size:48px;font-weight:800;padding:8px 24px;border-radius:999px;z-index:6;pointer-events:none;min-width:170px;text-align:center;line-height:1;}
 
 /* Loading overlay */
-.model-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;z-index:20;color:white;text-align:center;padding:2rem;}
+.model-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;z-index:20;color:white;text-align:center;padding:2rem;}
 .model-overlay.hidden{display:none;}
 .spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -84,22 +100,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cv-reps{font-size:0.8rem;font-weight:700;color:#68d391;white-space:nowrap;}
 
 /* Panel */
-.ex-panel{background:#2d3748;padding:0.9rem 1.2rem;flex-shrink:0;padding-bottom:max(0.9rem,env(safe-area-inset-bottom));}
-.ex-name-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
-.ex-name{font-size:1.05rem;font-weight:700;}
-.ex-counter{background:#4a5568;border-radius:8px;padding:3px 10px;font-size:0.78rem;color:#e2e8f0;}
-.progress-track{background:#4a5568;border-radius:4px;height:6px;margin-bottom:8px;overflow:hidden;}
-.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#48bb78,#38a169);transition:width 0.4s;}
+.ex-panel{background:#2d3748;padding:1rem 1.3rem;flex-shrink:0;padding-bottom:max(1rem,env(safe-area-inset-bottom));}
+.ex-name-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:12px;}
+.ex-name{font-size:1.45rem;font-weight:800;line-height:1.1;}
+.ex-counter{background:#4a5568;border-radius:12px;padding:8px 14px;font-size:1.1rem;color:#e2e8f0;min-width:86px;text-align:center;}
+.progress-track{background:#4a5568;border-radius:6px;height:8px;margin-bottom:10px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#48bb78,#38a169);transition:width 0.4s;}
 .progress-fill.done{background:linear-gradient(90deg,#68d391,#48bb78);}
-.ex-desc{font-size:0.78rem;color:#a0aec0;margin-bottom:8px;line-height:1.4;}
-.ex-dots{display:flex;gap:6px;justify-content:center;margin-bottom:8px;}
-.ex-dot{width:9px;height:9px;border-radius:50%;background:#4a5568;transition:background 0.3s;cursor:pointer;}
+.ex-desc{font-size:0.95rem;color:#cbd5e0;margin-bottom:12px;line-height:1.5;}
+.ex-dots{display:flex;gap:8px;justify-content:center;margin-bottom:10px;}
+.ex-dot{width:11px;height:11px;border-radius:50%;background:#4a5568;transition:background 0.3s;cursor:pointer;}
 .ex-dot.cur{background:#63b3ed;}
 .ex-dot.ok{background:#48bb78;}
-.ex-nav{display:flex;gap:0.8rem;margin-bottom:0.8rem;}
-.ex-nav button{flex:1;padding:10px;border:1.5px solid #4a5568;background:transparent;color:white;border-radius:10px;font-size:0.85rem;cursor:pointer;transition:background 0.1s;}
+.ex-nav{display:flex;gap:0.9rem;margin-bottom:1rem;}
+.ex-nav button{flex:1;padding:14px;border:1.5px solid #4a5568;background:transparent;color:white;border-radius:14px;font-size:1rem;cursor:pointer;transition:background 0.1s;min-height:56px;}
 .ex-nav button:hover{background:#4a5568;}
-.done-btn{width:100%;padding:13px;background:linear-gradient(135deg,#48bb78,#38a169);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(72,187,120,0.4);transition:transform 0.1s,opacity 0.2s;}
+.done-btn{width:100%;padding:16px 18px;background:linear-gradient(135deg,#48bb78,#38a169);color:white;border:none;border-radius:16px;font-size:1.15rem;font-weight:800;cursor:pointer;box-shadow:0 5px 18px rgba(72,187,120,0.35);transition:transform 0.1s,opacity 0.2s;}
 .done-btn:hover:not(:disabled){transform:translateY(-2px);}
 .done-btn:disabled{background:#4a5568;box-shadow:none;cursor:default;transform:none;}
 
@@ -113,8 +129,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .big-streak{font-size:3.5rem;line-height:1;margin-bottom:0.4rem;}
 .cel-exercises{display:flex;flex-direction:column;gap:6px;margin-bottom:1.5rem;width:100%;max-width:260px;}
 .cel-ex-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:10px;padding:7px 12px;}
-.cel-ex-row span{font-size:0.85rem;color:#e2e8f0;}
-.cel-check{color:#68d391;font-size:1rem;flex-shrink:0;}
+.cel-ex-row span{font-size:0.95rem;color:#e2e8f0;}
+.cel-check{color:#68d391;font-size:1.1rem;flex-shrink:0;}
+.cel-share{margin-bottom:0.8rem;background:#63b3ed;color:white;}
+.debug-panel{position:absolute;right:10px;bottom:10px;width:min(330px,calc(100% - 20px));max-height:45%;overflow:auto;background:rgba(0,0,0,0.78);color:#e2e8f0;border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;z-index:8;display:none;}
+.debug-panel.show{display:block;}
+
+@media (orientation: landscape) {
+  .ex-main{flex-direction:row;}
+  .camera-zone{width:60%;min-height:100vh;}
+  .ex-panel{width:40%;}
+  .ex-main > .camera-zone{flex:1;}
+  .ex-main > .ex-panel{flex:0 0 40%;}
+}
 </style>
 </head>
 <body>
@@ -124,6 +151,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="home-top">
     <button class="sens-btn" id="sens-btn" onclick="toggleSens()">
       Sensitivity <span class="badge" id="sens-label">Standard</span>
+    </button>
+    <button class="sens-btn" id="voice-btn" onclick="toggleVoice()">
+      Voice <span class="badge" id="voice-label">Off</span>
     </button>
   </div>
   <div class="home-header">
@@ -150,12 +180,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- INSTRUCTIONS -->
+<div id="instructions" class="screen">
+  <div class="instructions-card">
+    <div class="instructions-title" id="instructions-title"></div>
+    <div class="instructions-canvas-wrap">
+      <canvas id="instructions-canvas"></canvas>
+    </div>
+    <div class="instructions-text" id="instructions-text"></div>
+    <button class="start-camera-btn" onclick="startWorkout()">I'm ready — Start camera</button>
+    <button class="instructions-back" onclick="goHome()">Back Home</button>
+  </div>
+</div>
+
 <!-- EXERCISE -->
 <div id="exercise" class="screen">
   <div class="ex-topbar">
     <button class="back-btn" onclick="goHome()">←</button>
     <div class="topbar-info">
-      <h2 id="profile-name">Mom</h2>
+      <h2 id="profile-name" onclick="tapProfileName()">Mom</h2>
       <p id="profile-date"></p>
     </div>
     <div class="streak-badge">
@@ -168,6 +211,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <video id="camera-feed" autoplay playsinline muted></video>
       <canvas id="stick-canvas"></canvas>
       <div class="body-warn" id="body-warn">Step back — full body not visible</div>
+      <div class="overlay-counter" id="overlay-counter">0 / 0</div>
+      <div class="debug-panel" id="debug-panel"></div>
       <div class="model-overlay" id="model-overlay">
         <div class="spinner"></div>
         <div class="load-label" id="load-label">Starting camera…</div>
@@ -206,6 +251,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <h2 id="cel-title"></h2>
   <div class="cel-exercises" id="cel-exercises"></div>
   <p id="cel-desc"></p>
+  <button class="cel-close cel-share" onclick="shareCompletion()">Tell Vinay I'm done 💪</button>
   <button class="cel-close" onclick="closeCel()">Back Home</button>
 </div>
 
@@ -240,9 +286,37 @@ const SF = ()=> SENS==='easy' ? 0.65 : 1.0;
 
 // ── AUDIO ────────────────────────────────────
 let _audio = null;
+let speechReady = false;
+let lastWarnSpeak = 0;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isAndroid = /Android/.test(navigator.userAgent);
+let VOICE = localStorage.getItem('extrack_voice')==='true';
+let debugMode = false;
+let profileTapCount = 0;
+let profileTapTimer = null;
+let silentAudio = null;
+
 function getAudio(){
   if(!_audio) try{_audio=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   return _audio;
+}
+function initSpeech(){
+  if(speechReady || !('speechSynthesis' in window))return;
+  speechReady=true;
+  window.speechSynthesis.getVoices();
+}
+function speak(text){
+  if(!VOICE||!('speechSynthesis' in window))return;
+  const utter=new SpeechSynthesisUtterance(text);
+  utter.volume=1;utter.rate=1;utter.pitch=1;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+function speakWarn(text){
+  const now=Date.now();
+  if(now-lastWarnSpeak<5000)return;
+  lastWarnSpeak=now;
+  speak(text);
 }
 function beep(freq,dur,vol=0.18,delay=0){
   const ac=getAudio(); if(!ac)return;
@@ -261,10 +335,29 @@ function playAllDone(){[880,1100,1320,1760].forEach((f,i)=>beep(f,0.2,0.2,i*0.12
 // ── WAKE LOCK ────────────────────────────────
 let wakeLock=null;
 async function acquireWakeLock(){
+  if(isIOS){startSilentAudio();return;}
   if(!('wakeLock' in navigator))return;
   try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
 }
-function releaseWakeLock(){if(wakeLock){wakeLock.release();wakeLock=null;}}
+function releaseWakeLock(){
+  if(wakeLock){wakeLock.release();wakeLock=null;}
+  stopSilentAudio();
+}
+function startSilentAudio(){
+  if(silentAudio)return;
+  try{
+    const ac=getAudio(); if(!ac)return;
+    const osc=ac.createOscillator(),gain=ac.createGain();
+    gain.gain.value=0.0001;osc.connect(gain);gain.connect(ac.destination);
+    osc.frequency.value=20;osc.start();
+    silentAudio={osc,gain};
+  }catch(e){}
+}
+function stopSilentAudio(){
+  if(!silentAudio)return;
+  try{silentAudio.osc.stop();silentAudio.osc.disconnect();silentAudio.gain.disconnect();}catch(e){}
+  silentAudio=null;
+}
 document.addEventListener('visibilitychange',async()=>{
   if(document.visibilityState==='visible'&&wakeLock===null&&cvActive)await acquireWakeLock();
 });
@@ -358,18 +451,20 @@ class CalfRaiseDetector{
 }
 
 // ── EXERCISES ────────────────────────────────
-const EXERCISES=[
+const MOM_EXERCISES=[
   {id:'march',   name:'Standing March',    desc:'Lift knees alternately above hip height. Keep back straight, arms swinging.  (8 reps)',    Det:MarchDetector,    draw:drawMarch},
   {id:'armcirc', name:'Arm Circles',       desc:'Make large arm circles, raising each wrist above shoulder height each revolution.  (6 raises)',Det:ArmRaiseDetector,draw:drawArmCircle},
   {id:'sitstand',name:'Sit-to-Stand',      desc:'Start seated. Stand fully until knees are straight, then sit back down.  (5 stands)',      Det:SitStandDetector, draw:drawSitToStand},
   {id:'sidebend',name:'Side Bend Stretch', desc:'Raise one arm and lean your torso clearly to the opposite side. Alternate.  (6 bends)',    Det:SideBendDetector, draw:drawSideBend},
   {id:'calfrise',name:'Calf Raises',       desc:'Hold a chair for balance. Rise onto tiptoes, hold briefly, lower down.  (8 raises)',        Det:CalfRaiseDetector,draw:drawCalfRaise}
 ];
+const DAD_EXERCISES=[...MOM_EXERCISES];
+let exercises=MOM_EXERCISES;
 
 // ── STATE ────────────────────────────────────
 let profile='mom',exIdx=0,dets=[],raf=null,animT=0;
 let camStream=null,poseDetector=null,cvActive=false,isDetecting=false;
-let resizeHandler=null;
+let resizeHandler=null,instrRaf=null;
 let justCompleted=new Set(); // tracks exercises completed this session
 let advancing=false;
 
@@ -406,6 +501,7 @@ function refreshHome(){
     }
   });
   document.getElementById('sens-label').textContent=SENS==='easy'?'Easy':'Standard';
+  document.getElementById('voice-label').textContent=VOICE?'On':'Off';
 }
 
 // ── SENSITIVITY TOGGLE ───────────────────────
@@ -414,7 +510,13 @@ function toggleSens(){
   localStorage.setItem('extrack_sens',SENS);
   refreshHome();
   // Rebuild detectors if mid-session
-  if(dets.length)dets=EXERCISES.map(e=>new e.Det());
+  if(dets.length)dets=exercises.map(e=>new e.Det());
+}
+function toggleVoice(){
+  VOICE=!VOICE;
+  localStorage.setItem('extrack_voice',VOICE?'true':'false');
+  initSpeech();
+  refreshHome();
 }
 
 // ── PROFILE ──────────────────────────────────
@@ -423,23 +525,97 @@ async function openProfile(p){
   if(profileOpen)return; // debounce
   profileOpen=true;
   getAudio(); // initialise AudioContext on user gesture
+  initSpeech();
+  requestReminderPermission();
   profile=p;exIdx=0;justCompleted=new Set();advancing=false;
-  dets=EXERCISES.map(e=>new e.Det());
+  exercises=p==='mom'?MOM_EXERCISES:DAD_EXERCISES;
+  dets=exercises.map(e=>new e.Det());
   document.getElementById('profile-name').textContent=p==='mom'?'Mom 👩':'Dad 👨';
   document.getElementById('profile-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   document.getElementById('streak-num').textContent=getData(p).streak||0;
   document.getElementById('home').classList.remove('active');
-  document.getElementById('exercise').classList.add('active');
+  document.getElementById('instructions').classList.add('active');
   renderEx();renderDots();updateBtn();
+  renderInstructions();
+  startInstructionAnim();
+}
+
+async function startWorkout(){
+  stopInstructionAnim();
+  document.getElementById('instructions').classList.remove('active');
+  document.getElementById('exercise').classList.add('active');
+  speak('Exercise 1: '+exercises[0].name+'. '+exercises[0].desc.replace(/\s*\([^)]*\)/,''));
   await initCV();
 }
 
 function goHome(){
   profileOpen=false;advancing=false;
-  stopCV();stopRaf();releaseWakeLock();
+  stopCV();stopRaf();stopInstructionAnim();releaseWakeLock();
+  document.getElementById('instructions').classList.remove('active');
   document.getElementById('exercise').classList.remove('active');
   document.getElementById('home').classList.add('active');
   refreshHome();
+}
+
+function renderInstructions(){
+  const ex=exercises[exIdx];
+  document.getElementById('instructions-title').textContent=ex.name;
+  document.getElementById('instructions-text').textContent=ex.desc+' Stand 5-8 ft away so your full body is visible.';
+}
+
+function startInstructionAnim(){
+  const canvas=document.getElementById('instructions-canvas');
+  const wrap=canvas.parentElement;
+  const draw=()=>{
+    animT+=0.025;
+    canvas.width=wrap.clientWidth;
+    canvas.height=wrap.clientHeight;
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    exercises[exIdx].draw(ctx,canvas.width,canvas.height,animT);
+    instrRaf=requestAnimationFrame(draw);
+  };
+  stopInstructionAnim();
+  draw();
+}
+
+function stopInstructionAnim(){
+  if(instrRaf){cancelAnimationFrame(instrRaf);instrRaf=null;}
+}
+
+// ── CAMERA + MODEL HELPERS ───────────────────
+async function getCameraPermissionInstructions(){
+  if(navigator.permissions&&navigator.permissions.query){
+    try{
+      const status=await navigator.permissions.query({name:'camera'});
+      if(status.state==='denied'){
+        return isIOS? 'Go to Settings → Safari → Camera → set to Allow, then come back.' : isAndroid? 'Tap the camera icon in your browser address bar and allow camera.' : 'Please allow camera in your browser settings.';
+      }
+    }catch(e){}
+  }
+  if(isIOS) return 'Go to Settings → Safari → Camera → set to Allow, then come back.';
+  if(isAndroid) return 'Tap the camera icon in your browser address bar and allow camera.';
+  return 'Please allow camera in your browser settings.';
+}
+
+async function loadModel(){
+  if(typeof poseDetection==='undefined') throw new Error('TF.js not loaded');
+  const loadPromise=poseDetection.createDetector(
+    poseDetection.SupportedModels.MoveNet,
+    {modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING}
+  );
+  const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Model load timed out')),30000));
+  poseDetector=await Promise.race([loadPromise,timeout]);
+}
+
+function showInitError(isCamDenied,message){
+  const overlay=document.getElementById('model-overlay');
+  overlay.innerHTML=`
+      <div style="font-size:1.4rem">${isCamDenied?'🚫':'⚠️'}</div>
+      <div class="load-label">${isCamDenied?'Camera blocked':"Couldn't load"}</div>
+      <div class="load-sub" style="color:#fc8181">${message}</div>
+      ${isCamDenied?'':'<button class="overlay-retry" onclick="retryCV()">Try Again</button>'}
+      <button class="overlay-retry" style="background:#4a5568;color:white;margin-top:6px" onclick="goHome()">Go Back</button>`;
 }
 
 // ── CV INIT ───────────────────────────────────
@@ -476,10 +652,7 @@ async function initCV(){
     if(typeof poseDetection==='undefined')throw new Error('TF.js not loaded');
 
     if(!poseDetector){
-      poseDetector=await poseDetection.createDetector(
-        poseDetection.SupportedModels.MoveNet,
-        {modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING}
-      );
+      await loadModel();
     }
 
     // Warm-up inference to prevent first-rep lag
@@ -498,16 +671,10 @@ async function initCV(){
   }catch(err){
     clearInterval(stepTimer);
     console.warn('CV init failed:',err);
-    const errMsg=err.message||String(err);
-    const isCamDenied=errMsg.includes('NotAllowed')||errMsg.includes('Permission');
-    overlay.innerHTML=`
-      <div style="font-size:1.4rem">${isCamDenied?'🚫':'⚠️'}</div>
-      <div class="load-label">${isCamDenied?'Camera blocked':'Could not start'}</div>
-      <div class="load-sub" style="color:#fc8181">
-        ${isCamDenied?'Camera access is required to verify exercises and save your streak. Please allow camera in your browser settings.':'Check your internet connection and try again.'}
-      </div>
-      <button class="overlay-retry" onclick="retryCV()">Try Again</button>
-      <button class="overlay-retry" style="background:#4a5568;color:white;margin-top:6px" onclick="goHome()">Go Back</button>`;
+    const errMsg=(err && err.name)||err.message||String(err);
+    const isCamDenied=errMsg==='NotAllowedError'||errMsg.includes('NotAllowed')||errMsg.includes('Permission');
+    const helpText=isCamDenied?await getCameraPermissionInstructions():"Couldn't load — check your connection and tap to retry.";
+    showInitError(isCamDenied,helpText);
   }
 }
 
@@ -565,19 +732,21 @@ function startRaf(){
             // Body visibility check
             const visCount=CORE_KP.filter(i=>nkps[i]&&nkps[i].score>=0.3).length;
             const warn=document.getElementById('body-warn');
-            if(visCount<4){warn.textContent='Step back — full body not in frame';warn.classList.add('show');}
-            else if(visCount<6){warn.textContent='Step back a bit more for best tracking';warn.classList.add('show');}
+            const bodyBlocked=visCount<4;
+            if(bodyBlocked){warn.textContent='Step back — full body not in frame';warn.classList.add('show');speakWarn('Step back so your full body is visible');}
             else{warn.classList.remove('show');}
 
             // Update current detector
-            const hit=dets[exIdx].update(nkps);
+            const hit=bodyBlocked?false:dets[exIdx].update(nkps);
             if(hit){onRep();}
             updateCvStrip();updateBtn();renderDots();
+            updateDebug(nkps,visCount,bodyBlocked);
 
             // Auto-advance when exercise completes
             if(dets[exIdx].done&&!justCompleted.has(exIdx)&&!advancing){
               justCompleted.add(exIdx);
               playExDone();
+              speak('Well done. Moving to the next exercise.');
               advancing=true;
               setTimeout(autoAdvance,1600);
             }
@@ -589,7 +758,7 @@ function startRaf(){
       }
     }
 
-    EXERCISES[exIdx].draw(ctx,canvas.width,canvas.height,animT);
+    exercises[exIdx].draw(ctx,canvas.width,canvas.height,animT);
     raf=requestAnimationFrame(loop);
   }
   loop();
@@ -607,10 +776,11 @@ function stopRaf(){
 function autoAdvance(){
   advancing=false;
   // Find next incomplete exercise
-  const next=EXERCISES.findIndex((_,i)=>!dets[i].done&&i!==exIdx);
+  const next=exercises.findIndex((_,i)=>!dets[i].done&&i!==exIdx);
   if(next>=0){
     exIdx=next;animT=0;
     renderEx();renderDots();updateCvStrip();updateBtn();
+    speak('Exercise '+(exIdx+1)+': '+exercises[exIdx].name+'. '+exercises[exIdx].desc.replace(/\s*\([^)]*\)/,''));
   } else {
     // All done — check if button is now active
     updateBtn();
@@ -620,6 +790,11 @@ function autoAdvance(){
 // ── REP FLASH ────────────────────────────────
 function onRep(){
   playRep();
+  const det=dets[exIdx];
+  if(det){
+    document.getElementById('overlay-counter').textContent=det.count+' / '+det.target;
+    speak(String(det.count));
+  }
   const strip=document.getElementById('cv-strip');
   strip.classList.remove('flash');
   void strip.offsetWidth;
@@ -646,19 +821,21 @@ function drawSkeleton(ctx,kps,cw,ch,vw,vh){
 
 // ── UI ────────────────────────────────────────
 function renderEx(){
-  const ex=EXERCISES[exIdx];
+  const ex=exercises[exIdx];
   document.getElementById('ex-name').textContent=ex.name;
   document.getElementById('ex-desc').textContent=ex.desc;
-  document.getElementById('ex-counter').textContent=(exIdx+1)+' / '+EXERCISES.length;
+  document.getElementById('ex-counter').textContent=(exIdx+1)+' / '+exercises.length;
+  const det=dets[exIdx];
+  document.getElementById('overlay-counter').textContent=det?det.count+' / '+det.target:'0 / 0';
   updateProgress();
 }
 
 function renderDots(){
   const wrap=document.getElementById('ex-dots');wrap.innerHTML='';
-  EXERCISES.forEach((_,i)=>{
+  exercises.forEach((_,i)=>{
     const d=document.createElement('div');
     d.className='ex-dot'+(i===exIdx?' cur':'')+(dets[i]?.done?' ok':'');
-    d.title=EXERCISES[i].name;
+    d.title=exercises[i].name;
     d.onclick=()=>{exIdx=i;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();};
     wrap.appendChild(d);
   });
@@ -674,7 +851,61 @@ function updateCvStrip(){
   const det=dets[exIdx];if(!det)return;
   document.getElementById('cv-text').textContent=det.done?'✓ Exercise complete!':det.feedback;
   document.getElementById('cv-reps').textContent=det.count+' / '+det.target;
+  document.getElementById('overlay-counter').textContent=det.count+' / '+det.target;
   updateProgress();
+}
+
+function tapProfileName(){
+  profileTapCount++;
+  clearTimeout(profileTapTimer);
+  profileTapTimer=setTimeout(()=>profileTapCount=0,1800);
+  if(profileTapCount>=5){
+    profileTapCount=0;
+    debugMode=!debugMode;
+    document.getElementById('debug-panel').classList.toggle('show',debugMode);
+  }
+}
+
+function updateDebug(n,visCount,bodyBlocked){
+  const panel=document.getElementById('debug-panel');
+  if(!debugMode||!panel)return;
+  const fmt=v=>Number.isFinite(v)?v.toFixed(3):'n/a';
+  const ex=exercises[exIdx];
+  const lines=[
+    'Exercise: '+ex.name,
+    'Sensitivity: '+SENS+' (SF '+SF()+')',
+    'Visible core: '+visCount+'/6 '+(bodyBlocked?'PAUSED':'counting')
+  ];
+  if(ex.id==='march'){
+    const thr=0.07*SF();
+    lines.push('thr hip-knee Y > '+fmt(thr));
+    lines.push('L '+fmt(n[11]?.y-n[13]?.y)+' R '+fmt(n[12]?.y-n[14]?.y));
+  }else if(ex.id==='armcirc'){
+    const thr=0.07*SF();
+    lines.push('thr shoulder-wrist Y > '+fmt(thr));
+    lines.push('L '+fmt(n[5]?.y-n[9]?.y)+' R '+fmt(n[6]?.y-n[10]?.y));
+  }else if(ex.id==='sitstand'){
+    const l=okKp(n[11])&&okKp(n[13])&&okKp(n[15])?jointAngle(n[11],n[13],n[15]):NaN;
+    const r=okKp(n[12])&&okKp(n[14])&&okKp(n[16])?jointAngle(n[12],n[14],n[16]):NaN;
+    lines.push('sit < 130, stand > 160');
+    lines.push('knee angle L '+fmt(l)+' R '+fmt(r));
+  }else if(ex.id==='sidebend'){
+    const sh=okKp(n[5])&&okKp(n[6])?(n[5].x+n[6].x)/2:NaN;
+    const hip=okKp(n[11])&&okKp(n[12])?(n[11].x+n[12].x)/2:NaN;
+    const off=Math.abs(sh-hip),thr=0.08*SF();
+    lines.push('thr shoulder-hip X > '+fmt(thr));
+    lines.push('offset '+fmt(off));
+  }else if(ex.id==='calfrise'){
+    const det=dets[exIdx],thr=0.025*SF();
+    const sh=(okKp(n[5])&&okKp(n[6]))?(n[5].y+n[6].y)/2:(okKp(n[5])?n[5].y:n[6]?.y);
+    const sorted=[...(det?.hist||[])].sort((a,b)=>a.y-b.y);
+    const base=sorted.length?sorted[Math.floor(sorted.length*0.6)].y:NaN;
+    lines.push('thr baseline-shoulder Y > '+fmt(thr));
+    lines.push('baseline '+fmt(base)+' shoulder '+fmt(sh)+' diff '+fmt(base-sh));
+  }
+  const det=dets[exIdx];
+  lines.push('reps '+det.count+'/'+det.target);
+  panel.textContent=lines.join('\n');
 }
 
 function updateBtn(){
@@ -685,17 +916,22 @@ function updateBtn(){
   else{btn.textContent=rem+' exercise'+(rem>1?'s':'')+' remaining';btn.disabled=true;}
 }
 
-function nextEx(){exIdx=(exIdx+1)%EXERCISES.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
-function prevEx(){exIdx=(exIdx-1+EXERCISES.length)%EXERCISES.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
+function nextEx(){exIdx=(exIdx+1)%exercises.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
+function prevEx(){exIdx=(exIdx-1+exercises.length)%exercises.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
 
 // ── MARK DONE ────────────────────────────────
 function markDone(){
   if(!dets.every(d=>d.done))return;
   playAllDone();
+  speak('Excellent work. All exercises complete for today!');
   const d=getData(profile);
-  const yest=new Date(Date.now()-86400000).toISOString().split('T')[0];
-  d.streak=d.lastDone===yest?(d.streak||0)+1:1;
-  d.lastDone=todayStr();
+  const today=todayStr();
+  if(d.lastDone===today)return;
+  const last=d.lastDone?new Date(d.lastDone+'T00:00:00'):null;
+  const now=new Date(today+'T00:00:00');
+  const daysSinceLast=last?Math.round((now-last)/86400000):Infinity;
+  d.streak=daysSinceLast<=2?(d.streak||0)+1:1;
+  d.lastDone=today;
   d.best=Math.max(d.best||0,d.streak);
   const hist=d.history||[];
   if(!hist.includes(d.lastDone))hist.push(d.lastDone);
@@ -713,7 +949,7 @@ function showCel(streak,p){
 
   // Exercise checklist
   const wrap=document.getElementById('cel-exercises');wrap.innerHTML='';
-  EXERCISES.forEach(ex=>{
+  exercises.forEach(ex=>{
     const row=document.createElement('div');row.className='cel-ex-row';
     row.innerHTML=`<span class="cel-check">✓</span><span>${ex.name}</span>`;
     wrap.appendChild(row);
@@ -737,7 +973,33 @@ function showCel(streak,p){
   document.getElementById('celebration').classList.add('show');
 }
 
+async function shareCompletion(){
+  const who=profile==='mom'?'Mom':'Dad';
+  const text=who+' finished '+(profile==='mom'?'her':'his')+' exercises today! 💪';
+  if(navigator.share){
+    try{await navigator.share({text,url:location.href});return;}catch(e){}
+  }
+  const encoded=encodeURIComponent(text);
+  location.href=isIOS?'sms:&body='+encoded:'https://wa.me/?text='+encoded;
+}
+
 function closeCel(){document.getElementById('celebration').classList.remove('show');goHome();}
+
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator))return null;
+  try{return await navigator.serviceWorker.register('/sw.js');}
+  catch(e){console.warn('Service worker registration failed',e);return null;}
+}
+
+async function requestReminderPermission(){
+  if(isIOS||!('Notification' in window)||!('serviceWorker' in navigator))return;
+  if(localStorage.getItem('extrack_notif_asked')==='true'&&Notification.permission!=='granted')return;
+  localStorage.setItem('extrack_notif_asked','true');
+  const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
+  if(permission!=='granted')return;
+  const reg=await navigator.serviceWorker.ready;
+  if(reg.active)reg.active.postMessage({type:'schedule-reminder',hour:9,minute:0});
+}
 
 // ── STICK FIGURE GUIDES ───────────────────────
 function drawStick(ctx,cx,cy,s,p){
@@ -800,6 +1062,7 @@ function drawCalfRaise(ctx,W,H,t){
 
 // ── INIT ──────────────────────────────────────
 refreshHome();
+registerServiceWorker();
 </script>
 </body>
 </html>

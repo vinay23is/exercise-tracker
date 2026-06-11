@@ -19,8 +19,8 @@ Works on any phone or tablet — no install, no account, no tracking.
 | **Animated stick figure** | A stick figure drawn in real time over the camera demonstrates the current exercise in a looping animation. |
 | **Exercise library** | 5 exercises. Navigate with Previous / Next. Each shows name, reps/duration, and plain-English instructions. |
 | **Mark done** | One button logs the day, increments the streak, and fires a confetti celebration. |
-| **Streak tracking** | Consecutive daily completions increment the streak. Missing a day resets it to 1. |
-| **Offline / no server** | Everything lives in `localStorage`. Data never leaves the device. |
+| **Streak tracking** | Daily completions increment the streak, with a one-day grace period. |
+| **Offline / no server** | Data lives in `localStorage`. The service worker caches the app shell and pose model after first load. |
 
 ---
 
@@ -70,7 +70,7 @@ npx localtunnel --port 8765
 
 ## Adding exercises
 
-All exercises are in the `EXERCISES` array inside `index.html`. Each entry:
+Exercises are split into `MOM_EXERCISES` and `DAD_EXERCISES` inside `index.html`. Each entry:
 
 ```js
 {
@@ -113,8 +113,9 @@ function drawMyExercise(ctx, W, H, t) {
 - **Camera**: `getUserMedia({ video: { facingMode: 'user' } })`. Video is CSS-flipped (`scaleX(-1)`) to mirror the user.
 - **Animation**: `requestAnimationFrame` loop started on profile open, cancelled on back navigation.
 - **Canvas sizing**: resized to fill the camera zone on load and on window resize.
-- **Streak logic**: if `lastDone === yesterday` the streak increments; otherwise resets to 1. Completing twice in one day is a no-op.
-- **Storage keys**: `extrack_mom` and `extrack_dad` in `localStorage` — `{ streak, lastDone, history[] }`.
+- **Streak logic**: if the last completion was within two days, the streak increments; otherwise it resets to 1. Completing twice in one day is a no-op.
+- **Notifications**: daily reminder notifications are requested on first profile selection. Android Chrome can show them through the service worker; iOS Safari does not support reliable local scheduled service worker notifications.
+- **Storage keys**: `extrack_mom` and `extrack_dad` in `localStorage` — `{ streak, lastDone, best, history[] }`.
 
 ---
 
@@ -122,7 +123,11 @@ function drawMyExercise(ctx, W, H, t) {
 
 ```
 exercise-tracker/
-└── index.html    # Entire app. No build step, no dependencies.
+├── index.html     # Entire app. No build step, no dependencies.
+├── manifest.json  # PWA manifest.
+├── icon.svg       # App icon.
+├── sw.js          # Service worker cache and reminder support.
+└── offline.html   # Offline fallback page.
 ```
 
 ---

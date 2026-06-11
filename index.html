@@ -2,90 +2,130 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Daily exercise tracker with AI pose verification">
+<meta name="theme-color" content="#667eea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Exercises">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
 <title>Daily Exercise Tracker</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; color: #1a202c; }
-.screen { display: none; min-height: 100vh; }
-.screen.active { display: flex; flex-direction: column; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;color:#1a202c;overscroll-behavior:none;}
+.screen{display:none;min-height:100vh;min-height:100dvh;}
+.screen.active{display:flex;flex-direction:column;}
 
-#home { align-items: center; justify-content: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.home-header { text-align: center; color: white; margin-bottom: 3rem; }
-.home-header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
-.home-header p { font-size: 1.1rem; opacity: 0.85; }
-.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; width: 100%; max-width: 480px; }
-.profile-card { background: white; border-radius: 20px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-.profile-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
-.profile-card:active { transform: scale(0.97); }
-.profile-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-.avatar-mom { background: #fed7e2; }
-.avatar-dad { background: #bee3f8; }
-.profile-card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.4rem; }
-.streak-mini { font-size: 0.85rem; color: #718096; display: flex; align-items: center; justify-content: center; gap: 4px; }
-.done-badge { display: inline-block; background: #c6f6d5; color: #276749; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-top: 6px; }
+/* ── HOME ── */
+#home{align-items:center;justify-content:center;padding:2rem 1.5rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);}
+.home-top{width:100%;max-width:480px;display:flex;justify-content:flex-end;margin-bottom:0.5rem;}
+.sens-btn{background:rgba(255,255,255,0.15);border:none;color:white;border-radius:20px;padding:6px 14px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.sens-btn .badge{background:rgba(255,255,255,0.25);border-radius:10px;padding:2px 8px;font-size:0.72rem;font-weight:600;}
+.home-header{text-align:center;color:white;margin-bottom:2rem;}
+.home-header h1{font-size:2.2rem;font-weight:700;margin-bottom:0.4rem;}
+.home-header p{font-size:1rem;opacity:0.85;}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;width:100%;max-width:480px;}
+.profile-card{background:white;border-radius:20px;padding:1.8rem 1.2rem;text-align:center;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 4px 20px rgba(0,0,0,0.15);user-select:none;}
+.profile-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.2);}
+.profile-card:active{transform:scale(0.97);}
+.profile-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 0.8rem;display:flex;align-items:center;justify-content:center;font-size:2.2rem;}
+.avatar-mom{background:#fed7e2;} .avatar-dad{background:#bee3f8;}
+.profile-card h2{font-size:1.2rem;font-weight:600;margin-bottom:0.3rem;}
+.streak-row{font-size:0.82rem;color:#718096;display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;}
+.week-dots{display:flex;gap:3px;justify-content:center;margin-bottom:6px;}
+.wdot{width:7px;height:7px;border-radius:50%;background:#e2e8f0;}
+.wdot.hit{background:#48bb78;}
+.wdot.today{background:#667eea;}
+.done-badge{display:inline-block;background:#c6f6d5;color:#276749;font-size:0.72rem;font-weight:600;padding:2px 10px;border-radius:20px;}
+.best-streak{font-size:0.72rem;color:#a0aec0;}
 
-#exercise { background: #1a202c; color: white; }
-.ex-topbar { display: flex; align-items: center; padding: 1rem 1.2rem; background: #2d3748; gap: 1rem; flex-shrink: 0; }
-.back-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.ex-topbar-info { flex: 1; }
-.ex-topbar-info h2 { font-size: 1.1rem; font-weight: 600; }
-.ex-topbar-info p { font-size: 0.8rem; color: #a0aec0; }
-.streak-badge { background: linear-gradient(135deg, #f6ad55, #ed8936); border-radius: 12px; padding: 6px 12px; text-align: center; }
-.streak-badge .num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
-.streak-badge .lbl { font-size: 0.65rem; opacity: 0.9; }
+/* ── EXERCISE ── */
+#exercise{background:#1a202c;color:white;}
+.ex-topbar{display:flex;align-items:center;padding:1rem 1.2rem;background:#2d3748;gap:1rem;flex-shrink:0;padding-top:max(1rem,env(safe-area-inset-top));}
+.back-btn{background:rgba(255,255,255,0.1);border:none;color:white;min-width:36px;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.topbar-info{flex:1;}
+.topbar-info h2{font-size:1.05rem;font-weight:600;}
+.topbar-info p{font-size:0.78rem;color:#a0aec0;}
+.streak-badge{background:linear-gradient(135deg,#f6ad55,#ed8936);border-radius:12px;padding:5px 12px;text-align:center;flex-shrink:0;}
+.streak-badge .num{font-size:1.3rem;font-weight:700;line-height:1;}
+.streak-badge .lbl{font-size:0.62rem;opacity:0.9;}
 
-.ex-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.ex-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
 
-.camera-zone { position: relative; width: 100%; flex: 1; background: #000; overflow: hidden; min-height: 0; }
-#camera-feed { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-#stick-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Camera */
+.camera-zone{position:relative;width:100%;flex:1;background:#000;overflow:hidden;min-height:0;}
+#camera-feed{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+#stick-canvas{position:absolute;inset:0;width:100%;height:100%;}
 
-.model-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; z-index: 20; color: white; text-align: center; padding: 2rem; }
-.model-overlay.hidden { display: none; }
-.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.model-overlay p { font-size: 0.85rem; color: #a0aec0; max-width: 240px; line-height: 1.5; }
+/* Body-warning chip */
+.body-warn{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fef08a;font-size:0.78rem;font-weight:600;padding:5px 14px;border-radius:20px;white-space:nowrap;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:5;}
+.body-warn.show{opacity:1;}
 
-.cv-strip { background: #1a365d; padding: 6px 14px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-height: 34px; }
-.cv-dot { width: 8px; height: 8px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
-.cv-dot.on { background: #48bb78; animation: blink 1.2s ease infinite; }
-.cv-dot.warn { background: #f6ad55; animation: blink 1.2s ease infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.cv-text { font-size: 0.78rem; color: #90cdf4; flex: 1; }
-.cv-reps { font-size: 0.8rem; font-weight: 700; color: #68d391; white-space: nowrap; }
+/* Loading overlay */
+.model-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;z-index:20;color:white;text-align:center;padding:2rem;}
+.model-overlay.hidden{display:none;}
+.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-label{font-size:0.9rem;font-weight:500;}
+.load-sub{font-size:0.78rem;color:#a0aec0;max-width:230px;line-height:1.5;}
+.load-bar-track{width:160px;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden;}
+.load-bar{height:100%;background:#63b3ed;border-radius:2px;width:0%;transition:width 0.6s;}
+.overlay-retry{margin-top:0.5rem;padding:9px 22px;border-radius:10px;border:none;background:white;color:#1a202c;font-weight:600;font-size:0.9rem;cursor:pointer;}
 
-.ex-panel { background: #2d3748; padding: 1rem 1.2rem; flex-shrink: 0; }
-.ex-name-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.ex-name { font-size: 1.1rem; font-weight: 700; }
-.ex-counter { background: #4a5568; border-radius: 8px; padding: 3px 10px; font-size: 0.8rem; color: #e2e8f0; }
-.progress-track { background: #4a5568; border-radius: 4px; height: 7px; margin-bottom: 8px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #48bb78, #38a169); transition: width 0.4s; width: 0%; }
-.progress-fill.done { background: linear-gradient(90deg, #68d391, #48bb78); }
-.ex-desc { font-size: 0.8rem; color: #a0aec0; margin-bottom: 10px; line-height: 1.4; }
-.ex-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
-.ex-dot { width: 9px; height: 9px; border-radius: 50%; background: #4a5568; transition: background 0.3s; }
-.ex-dot.cur { background: #63b3ed; }
-.ex-dot.ok { background: #48bb78; }
-.ex-nav { display: flex; gap: 0.8rem; margin-bottom: 0.8rem; }
-.ex-nav button { flex: 1; padding: 9px; border: 1.5px solid #4a5568; background: transparent; color: white; border-radius: 10px; font-size: 0.85rem; cursor: pointer; transition: background 0.1s; }
-.ex-nav button:hover { background: #4a5568; }
-.done-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(72,187,120,0.4); transition: transform 0.1s; }
-.done-btn:hover:not(:disabled) { transform: translateY(-2px); }
-.done-btn:disabled { background: #4a5568; box-shadow: none; cursor: default; transform: none; }
+/* CV strip */
+.cv-strip{background:#1a365d;padding:6px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;min-height:34px;transition:background 0.15s;}
+.cv-strip.flash{background:#1a4731;}
+.cv-dot{width:8px;height:8px;border-radius:50%;background:#4a5568;flex-shrink:0;}
+.cv-dot.on{background:#48bb78;animation:blink 1.2s ease infinite;}
+.cv-dot.warn{background:#f6ad55;animation:blink 1.2s ease infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+.cv-text{font-size:0.78rem;color:#90cdf4;flex:1;}
+.cv-reps{font-size:0.8rem;font-weight:700;color:#68d391;white-space:nowrap;}
 
-.celebration { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-.celebration.show { opacity: 1; pointer-events: all; }
-.celebration h2 { font-size: 2rem; color: white; margin-bottom: 0.5rem; text-align: center; }
-.celebration p { color: #a0aec0; font-size: 1.1rem; margin-bottom: 2rem; }
-.confetti-area { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.cel-close { background: white; color: #1a202c; border: none; border-radius: 14px; padding: 14px 40px; font-size: 1.1rem; font-weight: 700; cursor: pointer; z-index: 1; }
-.big-streak { font-size: 4rem; line-height: 1; margin-bottom: 0.5rem; }
+/* Panel */
+.ex-panel{background:#2d3748;padding:0.9rem 1.2rem;flex-shrink:0;padding-bottom:max(0.9rem,env(safe-area-inset-bottom));}
+.ex-name-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.ex-name{font-size:1.05rem;font-weight:700;}
+.ex-counter{background:#4a5568;border-radius:8px;padding:3px 10px;font-size:0.78rem;color:#e2e8f0;}
+.progress-track{background:#4a5568;border-radius:4px;height:6px;margin-bottom:8px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#48bb78,#38a169);transition:width 0.4s;}
+.progress-fill.done{background:linear-gradient(90deg,#68d391,#48bb78);}
+.ex-desc{font-size:0.78rem;color:#a0aec0;margin-bottom:8px;line-height:1.4;}
+.ex-dots{display:flex;gap:6px;justify-content:center;margin-bottom:8px;}
+.ex-dot{width:9px;height:9px;border-radius:50%;background:#4a5568;transition:background 0.3s;cursor:pointer;}
+.ex-dot.cur{background:#63b3ed;}
+.ex-dot.ok{background:#48bb78;}
+.ex-nav{display:flex;gap:0.8rem;margin-bottom:0.8rem;}
+.ex-nav button{flex:1;padding:10px;border:1.5px solid #4a5568;background:transparent;color:white;border-radius:10px;font-size:0.85rem;cursor:pointer;transition:background 0.1s;}
+.ex-nav button:hover{background:#4a5568;}
+.done-btn{width:100%;padding:13px;background:linear-gradient(135deg,#48bb78,#38a169);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(72,187,120,0.4);transition:transform 0.1s,opacity 0.2s;}
+.done-btn:hover:not(:disabled){transform:translateY(-2px);}
+.done-btn:disabled{background:#4a5568;box-shadow:none;cursor:default;transform:none;}
+
+/* ── CELEBRATION ── */
+.celebration{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s;padding:2rem;}
+.celebration.show{opacity:1;pointer-events:all;}
+.celebration h2{font-size:1.8rem;color:white;margin-bottom:0.4rem;text-align:center;}
+.celebration p{color:#a0aec0;font-size:1rem;margin-bottom:1.5rem;text-align:center;}
+.confetti-area{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.cel-close{background:white;color:#1a202c;border:none;border-radius:14px;padding:13px 36px;font-size:1rem;font-weight:700;cursor:pointer;z-index:1;}
+.big-streak{font-size:3.5rem;line-height:1;margin-bottom:0.4rem;}
+.cel-exercises{display:flex;flex-direction:column;gap:6px;margin-bottom:1.5rem;width:100%;max-width:260px;}
+.cel-ex-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:10px;padding:7px 12px;}
+.cel-ex-row span{font-size:0.85rem;color:#e2e8f0;}
+.cel-check{color:#68d391;font-size:1rem;flex-shrink:0;}
 </style>
 </head>
 <body>
 
+<!-- HOME -->
 <div id="home" class="screen active">
+  <div class="home-top">
+    <button class="sens-btn" id="sens-btn" onclick="toggleSens()">
+      Sensitivity <span class="badge" id="sens-label">Standard</span>
+    </button>
+  </div>
   <div class="home-header">
     <h1>Daily Exercises 💪</h1>
     <p>Who's working out today?</p>
@@ -94,22 +134,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="profile-card" onclick="openProfile('mom')">
       <div class="profile-avatar avatar-mom">👩</div>
       <h2>Mom</h2>
-      <div class="streak-mini">🔥 <span id="mom-streak-mini">0 day streak</span></div>
-      <div id="mom-done-badge" class="done-badge" style="display:none">✓ Done today</div>
+      <div class="streak-row">🔥 <span id="mom-streak">0 day streak</span></div>
+      <div class="week-dots" id="mom-dots"></div>
+      <div id="mom-badge" class="done-badge" style="display:none">✓ Done today</div>
+      <div class="best-streak" id="mom-best"></div>
     </div>
     <div class="profile-card" onclick="openProfile('dad')">
       <div class="profile-avatar avatar-dad">👨</div>
       <h2>Dad</h2>
-      <div class="streak-mini">🔥 <span id="dad-streak-mini">0 day streak</span></div>
-      <div id="dad-done-badge" class="done-badge" style="display:none">✓ Done today</div>
+      <div class="streak-row">🔥 <span id="dad-streak">0 day streak</span></div>
+      <div class="week-dots" id="dad-dots"></div>
+      <div id="dad-badge" class="done-badge" style="display:none">✓ Done today</div>
+      <div class="best-streak" id="dad-best"></div>
     </div>
   </div>
 </div>
 
+<!-- EXERCISE -->
 <div id="exercise" class="screen">
   <div class="ex-topbar">
     <button class="back-btn" onclick="goHome()">←</button>
-    <div class="ex-topbar-info">
+    <div class="topbar-info">
       <h2 id="profile-name">Mom</h2>
       <p id="profile-date"></p>
     </div>
@@ -122,13 +167,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="camera-zone" id="camera-zone">
       <video id="camera-feed" autoplay playsinline muted></video>
       <canvas id="stick-canvas"></canvas>
+      <div class="body-warn" id="body-warn">Step back — full body not visible</div>
       <div class="model-overlay" id="model-overlay">
         <div class="spinner"></div>
-        <h3>Loading pose detection…</h3>
-        <p>Starting camera and AI model. Stand 5–8 ft away so your full body is visible.</p>
+        <div class="load-label" id="load-label">Starting camera…</div>
+        <div class="load-bar-track"><div class="load-bar" id="load-bar"></div></div>
+        <div class="load-sub" id="load-sub">Stand 5–8 ft away so your full body is visible</div>
       </div>
     </div>
-    <div class="cv-strip">
+    <div class="cv-strip" id="cv-strip">
       <div class="cv-dot warn" id="cv-dot"></div>
       <span class="cv-text" id="cv-text">Starting…</span>
       <span class="cv-reps" id="cv-reps"></span>
@@ -152,10 +199,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   </div>
 </div>
 
+<!-- CELEBRATION -->
 <div class="celebration" id="celebration">
   <div class="confetti-area" id="confetti-area"></div>
   <div class="big-streak" id="cel-streak">🔥</div>
   <h2 id="cel-title"></h2>
+  <div class="cel-exercises" id="cel-exercises"></div>
   <p id="cel-desc"></p>
   <button class="cel-close" onclick="closeCel()">Back Home</button>
 </div>
@@ -163,230 +212,380 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 <script>
-// ── KEYPOINTS (MoveNet) ──────────────────────
-// 0:nose 5:L_shoulder 6:R_shoulder 7:L_elbow 8:R_elbow
-// 9:L_wrist 10:R_wrist 11:L_hip 12:R_hip
-// 13:L_knee 14:R_knee 15:L_ankle 16:R_ankle
+'use strict';
+
+// ── KEYPOINTS ────────────────────────────────
 const BONES = [
   [0,5],[0,6],[5,6],[5,7],[7,9],[6,8],[8,10],
   [5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]
 ];
+const CORE_KP = [5,6,11,12,13,14]; // shoulders, hips, knees
 
-function ok(kp, t=0.28) { return kp && kp.score >= t; }
+function okKp(kp,t=0.28){return kp&&kp.score>=t;}
 
-function normKps(kps, vw, vh) {
-  return kps.map(k => ({ ...k, x: k.x/vw, y: k.y/vh }));
-}
+function normKps(kps,vw,vh){return kps.map(k=>({...k,x:k.x/vw,y:k.y/vh}));}
 
-function jointAngle(a, b, c) {
-  const v1x=a.x-b.x, v1y=a.y-b.y, v2x=c.x-b.x, v2y=c.y-b.y;
+function jointAngle(a,b,c){
+  const v1x=a.x-b.x,v1y=a.y-b.y,v2x=c.x-b.x,v2y=c.y-b.y;
   const dot=v1x*v2x+v1y*v2y;
   const mag=Math.sqrt(v1x**2+v1y**2)*Math.sqrt(v2x**2+v2y**2);
-  if (!mag) return 180;
+  if(!mag)return 180;
   return Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI;
 }
 
+// ── SENSITIVITY ──────────────────────────────
+// 'easy' multiplies thresholds by 0.65 — less movement required
+let SENS = localStorage.getItem('extrack_sens')||'standard';
+const SF = ()=> SENS==='easy' ? 0.65 : 1.0;
+
+// ── AUDIO ────────────────────────────────────
+let _audio = null;
+function getAudio(){
+  if(!_audio) try{_audio=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  return _audio;
+}
+function beep(freq,dur,vol=0.18,delay=0){
+  const ac=getAudio(); if(!ac)return;
+  const osc=ac.createOscillator(),gain=ac.createGain();
+  osc.connect(gain);gain.connect(ac.destination);
+  osc.frequency.value=freq;osc.type='sine';
+  const t=ac.currentTime+delay;
+  gain.gain.setValueAtTime(vol,t);
+  gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  osc.start(t);osc.stop(t+dur);
+}
+function playRep(){beep(880,0.12);}
+function playExDone(){beep(880,0.15);beep(1320,0.2,0.18,0.15);}
+function playAllDone(){[880,1100,1320,1760].forEach((f,i)=>beep(f,0.2,0.2,i*0.12));}
+
+// ── WAKE LOCK ────────────────────────────────
+let wakeLock=null;
+async function acquireWakeLock(){
+  if(!('wakeLock' in navigator))return;
+  try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+}
+function releaseWakeLock(){if(wakeLock){wakeLock.release();wakeLock=null;}}
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState==='visible'&&wakeLock===null&&cvActive)await acquireWakeLock();
+});
+
 // ── DETECTORS ────────────────────────────────
-
-class MarchDetector {
-  constructor() { this.reset(); }
-  reset() { this.count=0; this.target=8; this.lUp=false; this.rUp=false; this.last=0; this.feedback='Lift each knee above hip height'; }
-  update(n) {
-    const now=Date.now(); if (now-this.last<350) return;
-    const lK=n[13],lH=n[11],rK=n[14],rH=n[12]; let hit=false;
-    if (ok(lK)&&ok(lH)) { const up=lH.y-lK.y>0.07; if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left knee up ✓';} if(!up)this.lUp=false; }
-    if (ok(rK)&&ok(rH)) { const up=rH.y-rK.y>0.07; if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right knee up ✓';} if(!up)this.rUp=false; }
-    if (hit) { this.count=Math.min(this.count+1,this.target); this.last=now; }
-    else if (!this.lUp&&!this.rUp&&this.count<this.target) this.feedback='March — lift knees higher';
+class MarchDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=8;this.lUp=false;this.rUp=false;this.last=0;this.feedback='Lift each knee above hip height';}
+  update(n){
+    const now=Date.now();if(now-this.last<350)return false;
+    const lK=n[13],lH=n[11],rK=n[14],rH=n[12];const thr=0.07*SF();let hit=false;
+    if(okKp(lK)&&okKp(lH)){const up=lH.y-lK.y>thr;if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left knee up ✓';}if(!up)this.lUp=false;}
+    if(okKp(rK)&&okKp(rH)){const up=rH.y-rK.y>thr;if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right knee up ✓';}if(!up)this.rUp=false;}
+    if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
+    if(!this.lUp&&!this.rUp&&this.count<this.target)this.feedback='March — lift knees higher';
+    return false;
   }
-  get done() { return this.count>=this.target; }
-  get pct()  { return this.count/this.target; }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
 
-class ArmRaiseDetector {
-  constructor() { this.reset(); }
-  reset() { this.count=0; this.target=6; this.lUp=false; this.rUp=false; this.last=0; this.feedback='Swing arms up in big circles'; }
-  update(n) {
-    const now=Date.now(); if(now-this.last<450) return;
-    const lW=n[9],lS=n[5],rW=n[10],rS=n[6]; let hit=false;
-    if(ok(lW)&&ok(lS)){const up=lS.y-lW.y>0.07;if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left arm up ✓';}if(!up)this.lUp=false;}
-    if(ok(rW)&&ok(rS)){const up=rS.y-rW.y>0.07;if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right arm up ✓';}if(!up)this.rUp=false;}
-    if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;}
-    else if(!this.lUp&&!this.rUp&&this.count<this.target)this.feedback='Raise wrists above shoulder height';
+class ArmRaiseDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=6;this.lUp=false;this.rUp=false;this.last=0;this.feedback='Swing arms up in big circles';}
+  update(n){
+    const now=Date.now();if(now-this.last<450)return false;
+    const lW=n[9],lS=n[5],rW=n[10],rS=n[6];const thr=0.07*SF();let hit=false;
+    if(okKp(lW)&&okKp(lS)){const up=lS.y-lW.y>thr;if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left arm up ✓';}if(!up)this.lUp=false;}
+    if(okKp(rW)&&okKp(rS)){const up=rS.y-rW.y>thr;if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right arm up ✓';}if(!up)this.rUp=false;}
+    if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
+    if(!this.lUp&&!this.rUp&&this.count<this.target)this.feedback='Raise wrists above shoulder height';
+    return false;
   }
-  get done() { return this.count>=this.target; }
-  get pct()  { return this.count/this.target; }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
 
-class SitStandDetector {
-  constructor() { this.reset(); }
-  reset() { this.count=0; this.target=5; this.phase='unknown'; this.last=0; this.feedback='Sit in a chair then stand up fully'; }
-  update(n) {
-    const now=Date.now(); if(now-this.last<600) return;
+class SitStandDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=5;this.phase='unknown';this.last=0;this.feedback='Sit in a chair then stand up fully';}
+  update(n){
+    const now=Date.now();if(now-this.last<600)return false;
     let ang=null;
     const lH=n[11],lK=n[13],lA=n[15],rH=n[12],rK=n[14],rA=n[16];
-    if(ok(lH)&&ok(lK)&&ok(lA)) ang=jointAngle(lH,lK,lA);
-    else if(ok(rH)&&ok(rK)&&ok(rA)) ang=jointAngle(rH,rK,rA);
-    if(ang===null) return;
-    if(ang<130&&this.phase!=='sitting') { this.phase='sitting'; this.last=now; this.feedback='Knees bent — now stand up!'; }
-    else if(ang>160&&this.phase==='sitting') { this.phase='standing'; this.count=Math.min(this.count+1,this.target); this.last=now; this.feedback='Stood up ✓ — sit back down'; }
-    else if(this.phase!=='sitting'&&this.count<this.target) this.feedback='Sit down first, then stand tall';
+    if(okKp(lH)&&okKp(lK)&&okKp(lA))ang=jointAngle(lH,lK,lA);
+    else if(okKp(rH)&&okKp(rK)&&okKp(rA))ang=jointAngle(rH,rK,rA);
+    if(ang===null)return false;
+    if(ang<130&&this.phase!=='sitting'){this.phase='sitting';this.last=now;this.feedback='Knees bent — now stand up tall!';}
+    else if(ang>160&&this.phase==='sitting'){
+      this.phase='standing';this.count=Math.min(this.count+1,this.target);this.last=now;this.feedback='Stood up ✓ — sit back down';return true;
+    }else if(this.phase!=='sitting'&&this.count<this.target)this.feedback='Sit down first, then stand tall';
+    return false;
   }
-  get done() { return this.count>=this.target; }
-  get pct()  { return this.count/this.target; }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
 
-class SideBendDetector {
-  constructor() { this.reset(); }
-  reset() { this.count=0; this.target=6; this.neutral=true; this.last=0; this.feedback='Lean clearly to one side with arm overhead'; }
-  update(n) {
-    const now=Date.now(); if(now-this.last<500) return;
+class SideBendDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=6;this.neutral=true;this.last=0;this.feedback='Lean clearly to one side, arm overhead';}
+  update(n){
+    const now=Date.now();if(now-this.last<500)return false;
     const lS=n[5],rS=n[6],lH=n[11],rH=n[12];
-    if(!ok(lS)||!ok(rS)||!ok(lH)||!ok(rH)) return;
-    const shX=(lS.x+rS.x)/2, hipX=(lH.x+rH.x)/2, off=Math.abs(shX-hipX);
-    if(off>0.08&&this.neutral) { this.neutral=false; this.count=Math.min(this.count+1,this.target); this.last=now; this.feedback='Good bend ✓ — now lean the other way'; }
-    else if(off<0.04&&!this.neutral) this.neutral=true;
-    else if(this.count<this.target) this.feedback=off>0.04?'Lean a bit further…':'Lean clearly to one side';
+    if(!okKp(lS)||!okKp(rS)||!okKp(lH)||!okKp(rH))return false;
+    const shX=(lS.x+rS.x)/2,hipX=(lH.x+rH.x)/2,off=Math.abs(shX-hipX);const thr=0.08*SF();
+    if(off>thr&&this.neutral){this.neutral=false;this.count=Math.min(this.count+1,this.target);this.last=now;this.feedback='Good bend ✓ — lean the other way';return true;}
+    else if(off<0.04&&!this.neutral)this.neutral=true;
+    else if(this.count<this.target)this.feedback=off>0.04?'Lean a bit further…':'Lean clearly to one side';
+    return false;
   }
-  get done() { return this.count>=this.target; }
-  get pct()  { return this.count/this.target; }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
 
-class CalfRaiseDetector {
-  // Tracks average shoulder Y as a body-height proxy.
-  // Rising on tiptoes lifts the whole body, so shoulder Y decreases.
-  constructor() { this.reset(); }
-  reset() { this.count=0; this.target=8; this.hist=[]; this.raised=false; this.last=0; this.feedback='Rise up onto your tiptoes'; }
-  update(n) {
+class CalfRaiseDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=8;this.hist=[];this.raised=false;this.last=0;this.feedback='Rise up onto your tiptoes';}
+  update(n){
     const now=Date.now();
-    const lS=n[5],rS=n[6];
-    if(!ok(lS)&&!ok(rS)) return;
-    const shY=(ok(lS)&&ok(rS))?(lS.y+rS.y)/2:(ok(lS)?lS.y:rS.y);
+    const lS=n[5],rS=n[6];if(!okKp(lS)&&!okKp(rS))return false;
+    const shY=(okKp(lS)&&okKp(rS))?(lS.y+rS.y)/2:(okKp(lS)?lS.y:rS.y);
     this.hist.push({t:now,y:shY});
     this.hist=this.hist.filter(h=>now-h.t<3000);
-    if(this.hist.length<8) return;
+    if(this.hist.length<8){this.feedback='Hold still… calibrating';return false;}
     const sorted=[...this.hist].sort((a,b)=>a.y-b.y);
     const baseline=sorted[Math.floor(sorted.length*0.6)].y;
-    const isUp=shY<baseline-0.025;
-    if(now-this.last<400) return;
-    if(isUp&&!this.raised) { this.raised=true; this.count=Math.min(this.count+1,this.target); this.last=now; this.feedback='Tiptoes ✓ — lower back down'; }
-    else if(!isUp&&this.raised) { this.raised=false; if(this.count<this.target)this.feedback='Rise up on tiptoes again'; }
-    else if(!isUp&&this.count<this.target) this.feedback='Rise up slowly onto tiptoes';
+    const thr=0.025*SF();const isUp=shY<baseline-thr;
+    if(now-this.last<400)return false;
+    if(isUp&&!this.raised){this.raised=true;this.count=Math.min(this.count+1,this.target);this.last=now;this.feedback='Tiptoes ✓ — lower back down';return true;}
+    else if(!isUp&&this.raised){this.raised=false;if(this.count<this.target)this.feedback='Rise up on tiptoes again';}
+    else if(!isUp&&this.count<this.target)this.feedback='Rise slowly onto tiptoes';
+    return false;
   }
-  get done() { return this.count>=this.target; }
-  get pct()  { return this.count/this.target; }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
 
 // ── EXERCISES ────────────────────────────────
-const EXERCISES = [
-  { id:'march',    name:'Standing March',    desc:'Lift knees alternately above hip height. Keep back straight, arms swinging. (8 knee raises)',    Det:MarchDetector,    draw:drawMarch },
-  { id:'armcirc',  name:'Arm Circles',       desc:'Make large arm circles, raising wrists above shoulder height on each revolution. (6 arm raises)',  Det:ArmRaiseDetector, draw:drawArmCircle },
-  { id:'sitstand', name:'Sit-to-Stand',      desc:'Start seated in a chair. Stand up until knees are fully straight, then sit back down. (5 stands)', Det:SitStandDetector, draw:drawSitToStand },
-  { id:'sidebend', name:'Side Bend Stretch', desc:'Raise one arm and lean your torso clearly to the opposite side. Alternate. (6 bends)',             Det:SideBendDetector, draw:drawSideBend },
-  { id:'calfrise', name:'Calf Raises',       desc:'Hold a chair for balance. Rise slowly onto tiptoes, hold briefly, lower down. (8 raises)',         Det:CalfRaiseDetector,draw:drawCalfRaise }
+const EXERCISES=[
+  {id:'march',   name:'Standing March',    desc:'Lift knees alternately above hip height. Keep back straight, arms swinging.  (8 reps)',    Det:MarchDetector,    draw:drawMarch},
+  {id:'armcirc', name:'Arm Circles',       desc:'Make large arm circles, raising each wrist above shoulder height each revolution.  (6 raises)',Det:ArmRaiseDetector,draw:drawArmCircle},
+  {id:'sitstand',name:'Sit-to-Stand',      desc:'Start seated. Stand fully until knees are straight, then sit back down.  (5 stands)',      Det:SitStandDetector, draw:drawSitToStand},
+  {id:'sidebend',name:'Side Bend Stretch', desc:'Raise one arm and lean your torso clearly to the opposite side. Alternate.  (6 bends)',    Det:SideBendDetector, draw:drawSideBend},
+  {id:'calfrise',name:'Calf Raises',       desc:'Hold a chair for balance. Rise onto tiptoes, hold briefly, lower down.  (8 raises)',        Det:CalfRaiseDetector,draw:drawCalfRaise}
 ];
 
 // ── STATE ────────────────────────────────────
-let profile='mom', exIdx=0, dets=[], raf=null, animT=0, camStream=null, poseDetector=null, cvReady=false;
+let profile='mom',exIdx=0,dets=[],raf=null,animT=0;
+let camStream=null,poseDetector=null,cvActive=false,isDetecting=false;
+let resizeHandler=null;
+let justCompleted=new Set(); // tracks exercises completed this session
+let advancing=false;
 
 // ── STORAGE ──────────────────────────────────
-const today=()=>new Date().toISOString().split('T')[0];
-const getData=p=>JSON.parse(localStorage.getItem('extrack_'+p)||'{"streak":0,"lastDone":null}');
-const saveData=(p,d)=>localStorage.setItem('extrack_'+p,JSON.stringify(d));
-const doneToday=p=>getData(p).lastDone===today();
+const todayStr=()=>new Date().toISOString().split('T')[0];
 
-function refreshHome() {
+function getData(p){
+  try{return JSON.parse(localStorage.getItem('extrack_'+p)||'{"streak":0,"lastDone":null,"best":0,"history":[]}');}
+  catch(e){return{streak:0,lastDone:null,best:0,history:[]};}
+}
+function saveData(p,d){try{localStorage.setItem('extrack_'+p,JSON.stringify(d));}catch(e){}}
+const doneToday=p=>getData(p).lastDone===todayStr();
+
+// ── HOME RENDER ──────────────────────────────
+function refreshHome(){
+  const today=todayStr();
   ['mom','dad'].forEach(p=>{
     const d=getData(p);
-    document.getElementById(p+'-streak-mini').textContent=(d.streak||0)+' day streak';
-    document.getElementById(p+'-done-badge').style.display=doneToday(p)?'inline-block':'none';
+    const s=d.streak||0;
+    document.getElementById(p+'-streak').textContent=s+' day streak';
+    document.getElementById(p+'-badge').style.display=doneToday(p)?'inline-block':'none';
+    const best=d.best||0;
+    const bestEl=document.getElementById(p+'-best');
+    bestEl.textContent=best>1?'Best: '+best+' days':'';
+
+    // Weekly dots
+    const hist=d.history||[];
+    const wrap=document.getElementById(p+'-dots');wrap.innerHTML='';
+    for(let i=6;i>=0;i--){
+      const dateStr=new Date(Date.now()-i*86400000).toISOString().split('T')[0];
+      const el=document.createElement('div');
+      el.className='wdot'+(dateStr===today?' today':hist.includes(dateStr)?' hit':'');
+      wrap.appendChild(el);
+    }
   });
+  document.getElementById('sens-label').textContent=SENS==='easy'?'Easy':'Standard';
+}
+
+// ── SENSITIVITY TOGGLE ───────────────────────
+function toggleSens(){
+  SENS=SENS==='standard'?'easy':'standard';
+  localStorage.setItem('extrack_sens',SENS);
+  refreshHome();
+  // Rebuild detectors if mid-session
+  if(dets.length)dets=EXERCISES.map(e=>new e.Det());
 }
 
 // ── PROFILE ──────────────────────────────────
-async function openProfile(p) {
-  profile=p; exIdx=0;
+let profileOpen=false;
+async function openProfile(p){
+  if(profileOpen)return; // debounce
+  profileOpen=true;
+  getAudio(); // initialise AudioContext on user gesture
+  profile=p;exIdx=0;justCompleted=new Set();advancing=false;
   dets=EXERCISES.map(e=>new e.Det());
   document.getElementById('profile-name').textContent=p==='mom'?'Mom 👩':'Dad 👨';
   document.getElementById('profile-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   document.getElementById('streak-num').textContent=getData(p).streak||0;
   document.getElementById('home').classList.remove('active');
   document.getElementById('exercise').classList.add('active');
-  renderEx(); renderDots(); updateBtn();
+  renderEx();renderDots();updateBtn();
   await initCV();
 }
 
-function goHome() {
-  stopCV(); stopRaf();
+function goHome(){
+  profileOpen=false;advancing=false;
+  stopCV();stopRaf();releaseWakeLock();
   document.getElementById('exercise').classList.remove('active');
   document.getElementById('home').classList.add('active');
   refreshHome();
 }
 
 // ── CV INIT ───────────────────────────────────
-async function initCV() {
+async function initCV(){
   const overlay=document.getElementById('model-overlay');
   const dot=document.getElementById('cv-dot');
   const txt=document.getElementById('cv-text');
-  overlay.classList.remove('hidden'); cvReady=false;
-  try {
+  const lbl=document.getElementById('load-label');
+  const bar=document.getElementById('load-bar');
+  overlay.classList.remove('hidden');cvActive=false;
+
+  const steps=[
+    [5,'Starting camera…'],
+    [30,'Camera ready…'],
+    [55,'Downloading pose model…'],
+    [75,'Loading neural network…'],
+    [88,'Warming up GPU…'],
+  ];
+  let stepIdx=0;
+  const stepTimer=setInterval(()=>{
+    if(stepIdx<steps.length){
+      bar.style.width=steps[stepIdx][0]+'%';
+      lbl.textContent=steps[stepIdx][1];
+      stepIdx++;
+    }
+  },1800);
+
+  try{
     camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
     const vid=document.getElementById('camera-feed');
     vid.srcObject=camStream;
     await new Promise(res=>{vid.onloadedmetadata=()=>{vid.play();res();};});
-    txt.textContent='Loading MoveNet model…';
-    if(!poseDetector) {
+
+    if(typeof poseDetection==='undefined')throw new Error('TF.js not loaded');
+
+    if(!poseDetector){
       poseDetector=await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
         {modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING}
       );
     }
+
+    // Warm-up inference to prevent first-rep lag
+    if(vid.readyState>=2) await poseDetector.estimatePoses(vid,{flipHorizontal:false});
+
+    clearInterval(stepTimer);bar.style.width='100%';
+    await new Promise(res=>setTimeout(res,300));
+
     overlay.classList.add('hidden');
-    cvReady=true; dot.className='cv-dot on';
+    cvActive=true;dot.className='cv-dot on';
     txt.textContent='Pose detection active — do your exercise!';
+    document.getElementById('cv-reps').textContent='';
+    await acquireWakeLock();
     startRaf();
-  } catch(err) {
+
+  }catch(err){
+    clearInterval(stepTimer);
     console.warn('CV init failed:',err);
-    overlay.innerHTML=`<div style="font-size:1.5rem">⚠️</div><h3>Camera blocked</h3>
-      <p style="color:#fc8181">Camera access is required to verify exercises and save streaks.</p>
-      <button onclick="goHome()" style="margin-top:1rem;padding:10px 24px;border-radius:10px;border:none;background:white;font-weight:600;cursor:pointer">Go Back</button>`;
+    const errMsg=err.message||String(err);
+    const isCamDenied=errMsg.includes('NotAllowed')||errMsg.includes('Permission');
+    overlay.innerHTML=`
+      <div style="font-size:1.4rem">${isCamDenied?'🚫':'⚠️'}</div>
+      <div class="load-label">${isCamDenied?'Camera blocked':'Could not start'}</div>
+      <div class="load-sub" style="color:#fc8181">
+        ${isCamDenied?'Camera access is required to verify exercises and save your streak. Please allow camera in your browser settings.':'Check your internet connection and try again.'}
+      </div>
+      <button class="overlay-retry" onclick="retryCV()">Try Again</button>
+      <button class="overlay-retry" style="background:#4a5568;color:white;margin-top:6px" onclick="goHome()">Go Back</button>`;
   }
 }
 
-function stopCV() {
+function retryCV(){
+  document.getElementById('model-overlay').innerHTML=`
+    <div class="spinner"></div>
+    <div class="load-label" id="load-label">Starting camera…</div>
+    <div class="load-bar-track"><div class="load-bar" id="load-bar"></div></div>
+    <div class="load-sub" id="load-sub">Stand 5–8 ft away so your full body is visible</div>`;
+  stopRaf();
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-  const vid=document.getElementById('camera-feed');
-  if(vid) vid.srcObject=null;
-  cvReady=false;
-  document.getElementById('model-overlay').classList.remove('hidden');
+  setTimeout(initCV,300);
 }
 
-// ── ANIMATION + DETECTION LOOP ───────────────
-function startRaf() {
+function stopCV(){
+  cvActive=false;isDetecting=false;
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const vid=document.getElementById('camera-feed');if(vid)vid.srcObject=null;
+  const overlay=document.getElementById('model-overlay');
+  if(overlay){
+    overlay.classList.remove('hidden');
+    overlay.innerHTML=`<div class="spinner"></div><div class="load-label" id="load-label">Starting camera…</div><div class="load-bar-track"><div class="load-bar" id="load-bar"></div></div><div class="load-sub" id="load-sub">Stand 5–8 ft away so your full body is visible</div>`;
+  }
+}
+
+// ── RAF + DETECTION LOOP ─────────────────────
+function startRaf(){
   const canvas=document.getElementById('stick-canvas');
   const zone=document.getElementById('camera-zone');
-  const resize=()=>{canvas.width=zone.clientWidth;canvas.height=zone.clientHeight;};
-  resize(); window.addEventListener('resize',resize);
 
-  async function loop() {
+  resizeHandler=()=>{
+    canvas.width=zone.clientWidth;
+    canvas.height=zone.clientHeight;
+  };
+  resizeHandler();
+  window.addEventListener('resize',resizeHandler);
+  window.addEventListener('orientationchange',resizeHandler);
+
+  async function loop(){
     animT+=0.025;
     const ctx=canvas.getContext('2d');
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    if(cvReady&&poseDetector) {
+    if(cvActive&&poseDetector&&!isDetecting){
       const vid=document.getElementById('camera-feed');
-      if(vid.readyState>=2) {
-        try {
+      if(vid&&vid.readyState>=2){
+        isDetecting=true;
+        try{
           const poses=await poseDetector.estimatePoses(vid,{flipHorizontal:false});
-          if(poses.length>0) {
+          if(poses.length>0){
             const kps=poses[0].keypoints;
-            const vw=vid.videoWidth||canvas.width, vh=vid.videoHeight||canvas.height;
+            const vw=vid.videoWidth||canvas.width,vh=vid.videoHeight||canvas.height;
             const nkps=normKps(kps,vw,vh);
-            dets[exIdx].update(nkps);
-            updateCvStrip(); updateBtn(); renderDots();
+
+            // Body visibility check
+            const visCount=CORE_KP.filter(i=>nkps[i]&&nkps[i].score>=0.3).length;
+            const warn=document.getElementById('body-warn');
+            if(visCount<4){warn.textContent='Step back — full body not in frame';warn.classList.add('show');}
+            else if(visCount<6){warn.textContent='Step back a bit more for best tracking';warn.classList.add('show');}
+            else{warn.classList.remove('show');}
+
+            // Update current detector
+            const hit=dets[exIdx].update(nkps);
+            if(hit){onRep();}
+            updateCvStrip();updateBtn();renderDots();
+
+            // Auto-advance when exercise completes
+            if(dets[exIdx].done&&!justCompleted.has(exIdx)&&!advancing){
+              justCompleted.add(exIdx);
+              playExDone();
+              advancing=true;
+              setTimeout(autoAdvance,1600);
+            }
+
             drawSkeleton(ctx,kps,canvas.width,canvas.height,vw,vh);
           }
-        } catch(_){}
+        }catch(_){}
+        finally{isDetecting=false;}
       }
     }
 
@@ -396,29 +595,57 @@ function startRaf() {
   loop();
 }
 
-function stopRaf() { if(raf){cancelAnimationFrame(raf);raf=null;} }
+function stopRaf(){
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  if(resizeHandler){
+    window.removeEventListener('resize',resizeHandler);
+    window.removeEventListener('orientationchange',resizeHandler);
+    resizeHandler=null;
+  }
+}
 
-// ── SKELETON OVERLAY ──────────────────────────
-function drawSkeleton(ctx,kps,cw,ch,vw,vh) {
-  // Video is CSS-mirrored; canvas is not — flip x to match
-  const sx=cw/vw, sy=ch/vh;
-  const fx=x=>cw-x*sx, fy=y=>y*sy;
+function autoAdvance(){
+  advancing=false;
+  // Find next incomplete exercise
+  const next=EXERCISES.findIndex((_,i)=>!dets[i].done&&i!==exIdx);
+  if(next>=0){
+    exIdx=next;animT=0;
+    renderEx();renderDots();updateCvStrip();updateBtn();
+  } else {
+    // All done — check if button is now active
+    updateBtn();
+  }
+}
+
+// ── REP FLASH ────────────────────────────────
+function onRep(){
+  playRep();
+  const strip=document.getElementById('cv-strip');
+  strip.classList.remove('flash');
+  void strip.offsetWidth;
+  strip.classList.add('flash');
+  setTimeout(()=>strip.classList.remove('flash'),300);
+}
+
+// ── SKELETON OVERLAY ─────────────────────────
+function drawSkeleton(ctx,kps,cw,ch,vw,vh){
+  const sx=cw/vw,sy=ch/vh;
+  const fx=x=>cw-x*sx,fy=y=>y*sy; // flip x to match mirrored video
   const MIN=0.3;
-  ctx.strokeStyle='rgba(72,187,120,0.75)'; ctx.lineWidth=2.5; ctx.lineCap='round';
+  ctx.strokeStyle='rgba(72,187,120,0.75)';ctx.lineWidth=2.5;ctx.lineCap='round';
   for(const[i,j]of BONES){
-    const a=kps[i],b=kps[j];
-    if(!a||!b||a.score<MIN||b.score<MIN) continue;
-    ctx.beginPath(); ctx.moveTo(fx(a.x),fy(a.y)); ctx.lineTo(fx(b.x),fy(b.y)); ctx.stroke();
+    const a=kps[i],b=kps[j];if(!a||!b||a.score<MIN||b.score<MIN)continue;
+    ctx.beginPath();ctx.moveTo(fx(a.x),fy(a.y));ctx.lineTo(fx(b.x),fy(b.y));ctx.stroke();
   }
   for(const k of kps){
-    if(k.score<MIN) continue;
-    ctx.beginPath(); ctx.arc(fx(k.x),fy(k.y),4,0,Math.PI*2);
-    ctx.fillStyle=k.score>0.6?'rgba(72,187,120,0.95)':'rgba(72,187,120,0.5)'; ctx.fill();
+    if(k.score<MIN)continue;
+    ctx.beginPath();ctx.arc(fx(k.x),fy(k.y),4,0,Math.PI*2);
+    ctx.fillStyle=k.score>0.6?'rgba(72,187,120,0.95)':'rgba(72,187,120,0.5)';ctx.fill();
   }
 }
 
 // ── UI ────────────────────────────────────────
-function renderEx() {
+function renderEx(){
   const ex=EXERCISES[exIdx];
   document.getElementById('ex-name').textContent=ex.name;
   document.getElementById('ex-desc').textContent=ex.desc;
@@ -426,29 +653,31 @@ function renderEx() {
   updateProgress();
 }
 
-function renderDots() {
-  const wrap=document.getElementById('ex-dots'); wrap.innerHTML='';
+function renderDots(){
+  const wrap=document.getElementById('ex-dots');wrap.innerHTML='';
   EXERCISES.forEach((_,i)=>{
     const d=document.createElement('div');
     d.className='ex-dot'+(i===exIdx?' cur':'')+(dets[i]?.done?' ok':'');
+    d.title=EXERCISES[i].name;
+    d.onclick=()=>{exIdx=i;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();};
     wrap.appendChild(d);
   });
 }
 
-function updateProgress() {
-  const det=dets[exIdx]; const pct=det?Math.round(det.pct*100):0;
+function updateProgress(){
+  const det=dets[exIdx];const pct=det?Math.round(det.pct*100):0;
   const bar=document.getElementById('progress-fill');
-  bar.style.width=pct+'%'; bar.className='progress-fill'+(det?.done?' done':'');
+  bar.style.width=pct+'%';bar.className='progress-fill'+(det?.done?' done':'');
 }
 
-function updateCvStrip() {
-  const det=dets[exIdx]; if(!det) return;
+function updateCvStrip(){
+  const det=dets[exIdx];if(!det)return;
   document.getElementById('cv-text').textContent=det.done?'✓ Exercise complete!':det.feedback;
   document.getElementById('cv-reps').textContent=det.count+' / '+det.target;
   updateProgress();
 }
 
-function updateBtn() {
+function updateBtn(){
   const btn=document.getElementById('done-btn');
   if(doneToday(profile)){btn.textContent='✓ Already done today!';btn.disabled=true;return;}
   const rem=dets.filter(d=>!d.done).length;
@@ -460,31 +689,51 @@ function nextEx(){exIdx=(exIdx+1)%EXERCISES.length;animT=0;renderEx();renderDots
 function prevEx(){exIdx=(exIdx-1+EXERCISES.length)%EXERCISES.length;animT=0;renderEx();renderDots();updateCvStrip();updateBtn();}
 
 // ── MARK DONE ────────────────────────────────
-function markDone() {
-  if(!dets.every(d=>d.done)) return;
+function markDone(){
+  if(!dets.every(d=>d.done))return;
+  playAllDone();
   const d=getData(profile);
   const yest=new Date(Date.now()-86400000).toISOString().split('T')[0];
   d.streak=d.lastDone===yest?(d.streak||0)+1:1;
-  d.lastDone=today(); saveData(profile,d);
+  d.lastDone=todayStr();
+  d.best=Math.max(d.best||0,d.streak);
+  const hist=d.history||[];
+  if(!hist.includes(d.lastDone))hist.push(d.lastDone);
+  d.history=hist.slice(-60); // keep last 60 days
+  saveData(profile,d);
   document.getElementById('streak-num').textContent=d.streak;
   showCel(d.streak,profile);
 }
 
 // ── CELEBRATION ──────────────────────────────
-function showCel(streak,p) {
+function showCel(streak,p){
   document.getElementById('cel-streak').textContent='🔥 '+streak;
-  document.getElementById('cel-title').textContent=p==='mom'?'Great job, Mom!':'Great job, Dad!';
-  document.getElementById('cel-desc').textContent=streak===1?'Day 1 complete — come back tomorrow!':streak+' days in a row — keep going!';
-  const area=document.getElementById('confetti-area'); area.innerHTML='';
-  const cols=['#f6ad55','#68d391','#63b3ed','#fc8181','#b794f4','#fefcbf'];
-  for(let i=0;i<60;i++){
-    const el=document.createElement('div'),sz=8+Math.random()*10;
-    el.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};
+  document.getElementById('cel-title').textContent=p==='mom'?'Amazing, Mom!':'Amazing, Dad!';
+  document.getElementById('cel-desc').textContent=streak===1?'Day 1 — the streak starts! See you tomorrow.':streak+' days in a row — keep going!';
+
+  // Exercise checklist
+  const wrap=document.getElementById('cel-exercises');wrap.innerHTML='';
+  EXERCISES.forEach(ex=>{
+    const row=document.createElement('div');row.className='cel-ex-row';
+    row.innerHTML=`<span class="cel-check">✓</span><span>${ex.name}</span>`;
+    wrap.appendChild(row);
+  });
+
+  // Confetti
+  const area=document.getElementById('confetti-area');area.innerHTML='';
+  const cols=['#f6ad55','#68d391','#63b3ed','#fc8181','#b794f4','#fef08a'];
+  for(let i=0;i<70;i++){
+    const el=document.createElement('div'),sz=7+Math.random()*11;
+    el.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;background:${cols[i%cols.length]};
       border-radius:${Math.random()>.5?'50%':'2px'};left:${Math.random()*100}%;top:-20px;
-      animation:fall ${1.5+Math.random()*2}s linear ${Math.random()*.8}s forwards;`;
+      animation:fall ${1.5+Math.random()*2}s linear ${Math.random()*0.8}s forwards;`;
     area.appendChild(el);
   }
-  if(!document.getElementById('cfall')){const s=document.createElement('style');s.id='cfall';s.textContent='@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}';document.head.appendChild(s);}
+  if(!document.getElementById('cfall')){
+    const s=document.createElement('style');s.id='cfall';
+    s.textContent='@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}';
+    document.head.appendChild(s);
+  }
   document.getElementById('celebration').classList.add('show');
 }
 
@@ -492,9 +741,10 @@ function closeCel(){document.getElementById('celebration').classList.remove('sho
 
 // ── STICK FIGURE GUIDES ───────────────────────
 function drawStick(ctx,cx,cy,s,p){
-  ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=3*(s/60);ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='rgba(255,255,255,0.42)';ctx.lineWidth=3*(s/60);ctx.lineCap='round';ctx.lineJoin='round';
   const c=(x,y)=>[cx+x*s,cy+y*s];
-  ctx.beginPath();ctx.arc(...c(0,p.headY-0.5),0.5*s,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.45)';ctx.fill();
+  ctx.beginPath();ctx.arc(...c(0,p.headY-0.5),0.5*s,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.42)';ctx.fill();
   const ln=(a,b)=>{ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();};
   ln(c(0,p.neckY),c(0,p.hipY));
   ln(c(0,p.shoulderY),c(...p.lEl));ln(c(...p.lEl),c(...p.lWr));
@@ -508,7 +758,6 @@ function glbl(ctx,x,y,text){
   ctx.fillStyle='rgba(0,0,0,0.5)';ctx.beginPath();ctx.roundRect(x-w/2,y-13,w,21,5);ctx.fill();
   ctx.fillStyle='white';ctx.fillText(text,x,y+3);ctx.restore();
 }
-
 function drawMarch(ctx,W,H,t){
   const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,ph=Math.sin(t*3);
   const lKY=2.5-Math.max(0,ph)*1.5,rKY=2.5+Math.max(0,-ph)*1.5;
@@ -549,6 +798,7 @@ function drawCalfRaise(ctx,W,H,t){
   glbl(ctx,cx,cy-s*4.5-rise*s,'Rise on tiptoes!');
 }
 
+// ── INIT ──────────────────────────────────────
 refreshHome();
 </script>
 </body>

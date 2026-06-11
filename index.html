@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Exercise Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    color: #1a202c;
+  }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ── HOME SCREEN ── */
+  #home {
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .home-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 3rem;
+  }
+  .home-header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .home-header p { font-size: 1.1rem; opacity: 0.85; }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .profile-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .profile-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .profile-card:active { transform: scale(0.97); }
+
+  .profile-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+  }
+  .avatar-mom { background: #fed7e2; }
+  .avatar-dad { background: #bee3f8; }
+
+  .profile-card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .profile-card .streak-mini {
+    font-size: 0.85rem;
+    color: #718096;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .streak-fire { font-size: 1rem; }
+
+  .done-badge {
+    display: inline-block;
+    background: #c6f6d5;
+    color: #276749;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 6px;
+  }
+
+  /* ── EXERCISE SCREEN ── */
+  #exercise {
+    background: #1a202c;
+    color: white;
+  }
+
+  .ex-topbar {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    background: #2d3748;
+    gap: 1rem;
+  }
+  .back-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ex-topbar-info { flex: 1; }
+  .ex-topbar-info h2 { font-size: 1.1rem; font-weight: 600; }
+  .ex-topbar-info p { font-size: 0.8rem; color: #a0aec0; }
+
+  .streak-badge {
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+    border-radius: 12px;
+    padding: 6px 12px;
+    text-align: center;
+  }
+  .streak-badge .num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+  .streak-badge .lbl { font-size: 0.65rem; opacity: 0.9; }
+
+  .ex-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Camera + figure overlay */
+  .camera-zone {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    background: #000;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  #camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  #camera-feed.on { opacity: 1; }
+
+  .camera-placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0.8rem;
+    color: #718096;
+  }
+  .camera-placeholder .cam-icon { font-size: 3rem; }
+  .camera-placeholder p { font-size: 0.9rem; }
+
+  .figure-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  #stick-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Exercise info panel */
+  .ex-panel {
+    background: #2d3748;
+    padding: 1.2rem;
+  }
+
+  .ex-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .ex-name { font-size: 1.2rem; font-weight: 700; }
+  .ex-counter {
+    background: #4a5568;
+    border-radius: 10px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+  }
+
+  .ex-desc { font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem; line-height: 1.5; }
+
+  .ex-nav {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .ex-nav button {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px solid #4a5568;
+    background: transparent;
+    color: white;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .ex-nav button:hover { background: #4a5568; }
+
+  .done-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 15px rgba(72,187,120,0.4);
+  }
+  .done-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(72,187,120,0.5); }
+  .done-btn:active { transform: scale(0.98); }
+  .done-btn:disabled {
+    background: #4a5568;
+    box-shadow: none;
+    cursor: default;
+    transform: none;
+  }
+
+  /* Camera start overlay */
+  .cam-start-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1rem;
+    z-index: 10;
+  }
+  .cam-start-overlay h3 { font-size: 1.1rem; color: white; }
+  .cam-start-btn {
+    background: white;
+    color: #1a202c;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .cam-start-overlay.hidden { display: none; }
+
+  /* Celebration overlay */
+  .celebration {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .celebration.show { opacity: 1; pointer-events: all; }
+  .celebration h2 { font-size: 2rem; color: white; margin-bottom: 0.5rem; text-align: center; }
+  .celebration p { color: #a0aec0; font-size: 1.1rem; margin-bottom: 2rem; }
+  .confetti-area { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .celebration-close {
+    background: white;
+    color: #1a202c;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 1;
+  }
+  .big-streak {
+    font-size: 4rem;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  @media (max-height: 700px) {
+    .ex-panel { padding: 0.8rem; }
+    .ex-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div id="home" class="screen active">
+  <div class="home-header">
+    <h1>Daily Exercises 💪</h1>
+    <p>Who's working out today?</p>
+  </div>
+  <div class="profile-grid">
+    <div class="profile-card" onclick="openProfile('mom')">
+      <div class="profile-avatar avatar-mom">👩</div>
+      <h2>Mom</h2>
+      <div class="streak-mini">
+        <span class="streak-fire">🔥</span>
+        <span id="mom-streak-mini">0 day streak</span>
+      </div>
+      <div id="mom-done-badge" class="done-badge" style="display:none">✓ Done today</div>
+    </div>
+    <div class="profile-card" onclick="openProfile('dad')">
+      <div class="profile-avatar avatar-dad">👨</div>
+      <h2>Dad</h2>
+      <div class="streak-mini">
+        <span class="streak-fire">🔥</span>
+        <span id="dad-streak-mini">0 day streak</span>
+      </div>
+      <div id="dad-done-badge" class="done-badge" style="display:none">✓ Done today</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE SCREEN -->
+<div id="exercise" class="screen">
+  <div class="ex-topbar">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="ex-topbar-info">
+      <h2 id="profile-name">Mom</h2>
+      <p id="profile-date"></p>
+    </div>
+    <div class="streak-badge">
+      <div class="num" id="streak-num">0</div>
+      <div class="lbl">🔥 streak</div>
+    </div>
+  </div>
+
+  <div class="ex-main">
+    <div class="camera-zone" id="camera-zone">
+      <video id="camera-feed" autoplay playsinline muted></video>
+      <div class="camera-placeholder" id="cam-placeholder">
+        <div class="cam-icon">📷</div>
+        <p>Camera not started</p>
+      </div>
+      <div class="figure-overlay">
+        <canvas id="stick-canvas"></canvas>
+      </div>
+      <div class="cam-start-overlay" id="cam-overlay">
+        <h3>Enable camera to see yourself</h3>
+        <button class="cam-start-btn" onclick="startCamera()">Start Camera</button>
+        <button class="cam-start-btn" style="background:#4a5568;color:white;margin-top:4px" onclick="dismissCamera()">Skip camera</button>
+      </div>
+    </div>
+
+    <div class="ex-panel">
+      <div class="ex-name-row">
+        <div class="ex-name" id="ex-name">Exercise</div>
+        <div class="ex-counter" id="ex-counter">1 / 4</div>
+      </div>
+      <div class="ex-desc" id="ex-desc"></div>
+      <div class="ex-nav">
+        <button onclick="prevExercise()">← Previous</button>
+        <button onclick="nextExercise()">Next →</button>
+      </div>
+      <button class="done-btn" id="done-btn" onclick="markDone()">
+        ✓ Mark All Done for Today
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CELEBRATION -->
+<div class="celebration" id="celebration">
+  <div class="confetti-area" id="confetti-area"></div>
+  <div class="big-streak" id="cel-streak">🔥</div>
+  <h2 id="cel-title">Amazing work!</h2>
+  <p id="cel-desc">Keep it up!</p>
+  <button class="celebration-close" onclick="closeCelebration()">Back Home</button>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// DATA
+// ──────────────────────────────────────────────
+const EXERCISES = [
+  {
+    id: 'march',
+    name: 'Standing March',
+    desc: 'Lift knees alternately to hip height. Keep your back straight and swing your arms gently. Great for circulation and balance.',
+    reps: '30 seconds',
+    draw: drawMarch
+  },
+  {
+    id: 'armcircle',
+    name: 'Arm Circles',
+    desc: 'Extend arms out to the sides and make slow circles forward, then backward. Loosens shoulder joints.',
+    reps: '10 each direction',
+    draw: drawArmCircle
+  },
+  {
+    id: 'squat',
+    name: 'Sit-to-Stand',
+    desc: 'Slowly stand up from a chair, then sit back down in a controlled way. Strengthens legs and improves balance.',
+    reps: '10 times',
+    draw: drawSitToStand
+  },
+  {
+    id: 'sidebend',
+    name: 'Side Bend Stretch',
+    desc: 'Stand tall, raise one arm overhead and gently lean to the opposite side. Hold 3 seconds each side.',
+    reps: '5 each side',
+    draw: drawSideBend
+  },
+  {
+    id: 'calfraise',
+    name: 'Calf Raises',
+    desc: 'Stand behind a chair for support. Rise up onto your toes, hold 2 seconds, then lower slowly.',
+    reps: '15 times',
+    draw: drawCalfRaise
+  }
+];
+
+let currentProfile = 'mom';
+let currentExIdx = 0;
+let animFrame = null;
+let camStream = null;
+let animT = 0;
+
+function getToday() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getData(profile) {
+  const raw = localStorage.getItem('extrack_' + profile);
+  if (!raw) return { streak: 0, lastDone: null, history: [] };
+  return JSON.parse(raw);
+}
+
+function saveData(profile, data) {
+  localStorage.setItem('extrack_' + profile, JSON.stringify(data));
+}
+
+function isDoneToday(profile) {
+  return getData(profile).lastDone === getToday();
+}
+
+function computeStreak(data) {
+  return data.streak || 0;
+}
+
+// ──────────────────────────────────────────────
+// HOME
+// ──────────────────────────────────────────────
+function refreshHome() {
+  ['mom', 'dad'].forEach(p => {
+    const data = getData(p);
+    const streak = computeStreak(data);
+    document.getElementById(p + '-streak-mini').textContent =
+      streak === 1 ? '1 day streak' : streak + ' day streak';
+    const badge = document.getElementById(p + '-done-badge');
+    badge.style.display = isDoneToday(p) ? 'inline-block' : 'none';
+  });
+}
+
+function openProfile(profile) {
+  currentProfile = profile;
+  currentExIdx = 0;
+
+  document.getElementById('profile-name').textContent =
+    profile === 'mom' ? 'Mom 👩' : 'Dad 👨';
+  document.getElementById('profile-date').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+  const data = getData(profile);
+  document.getElementById('streak-num').textContent = computeStreak(data);
+
+  const doneBtn = document.getElementById('done-btn');
+  if (isDoneToday(profile)) {
+    doneBtn.textContent = '✓ Already done today!';
+    doneBtn.disabled = true;
+  } else {
+    doneBtn.textContent = '✓ Mark All Done for Today';
+    doneBtn.disabled = false;
+  }
+
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('exercise').classList.add('active');
+
+  document.getElementById('cam-overlay').classList.remove('hidden');
+
+  renderExercise();
+  startAnimation();
+}
+
+function goHome() {
+  stopCamera();
+  stopAnimation();
+  document.getElementById('exercise').classList.remove('active');
+  document.getElementById('home').classList.add('active');
+  refreshHome();
+}
+
+// ──────────────────────────────────────────────
+// EXERCISE NAV
+// ──────────────────────────────────────────────
+function renderExercise() {
+  const ex = EXERCISES[currentExIdx];
+  document.getElementById('ex-name').textContent = ex.name;
+  document.getElementById('ex-desc').textContent = ex.desc + '  (' + ex.reps + ')';
+  document.getElementById('ex-counter').textContent =
+    (currentExIdx + 1) + ' / ' + EXERCISES.length;
+}
+
+function nextExercise() {
+  currentExIdx = (currentExIdx + 1) % EXERCISES.length;
+  animT = 0;
+  renderExercise();
+}
+
+function prevExercise() {
+  currentExIdx = (currentExIdx - 1 + EXERCISES.length) % EXERCISES.length;
+  animT = 0;
+  renderExercise();
+}
+
+// ──────────────────────────────────────────────
+// CAMERA
+// ──────────────────────────────────────────────
+async function startCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    const vid = document.getElementById('camera-feed');
+    vid.srcObject = camStream;
+    vid.onloadedmetadata = () => vid.play();
+    vid.classList.add('on');
+    document.getElementById('cam-placeholder').style.display = 'none';
+    document.getElementById('cam-overlay').classList.add('hidden');
+  } catch(e) {
+    document.getElementById('cam-overlay').classList.add('hidden');
+  }
+}
+
+function dismissCamera() {
+  document.getElementById('cam-overlay').classList.add('hidden');
+}
+
+function stopCamera() {
+  if (camStream) {
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+  }
+  const vid = document.getElementById('camera-feed');
+  vid.srcObject = null;
+  vid.classList.remove('on');
+}
+
+// ──────────────────────────────────────────────
+// STICK FIGURE ANIMATION
+// ──────────────────────────────────────────────
+function startAnimation() {
+  const canvas = document.getElementById('stick-canvas');
+  const zone = document.getElementById('camera-zone');
+
+  function resize() {
+    canvas.width = zone.clientWidth;
+    canvas.height = zone.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function loop() {
+    animT += 0.025;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    EXERCISES[currentExIdx].draw(ctx, canvas.width, canvas.height, animT);
+    animFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function stopAnimation() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+}
+
+// Shared stick-figure drawing helpers
+function drawStick(ctx, cx, cy, scale, parts) {
+  // parts: { headY, neckY, shoulderY, hipY, leftElbow, leftHand, rightElbow, rightHand, leftKnee, leftFoot, rightKnee, rightFoot }
+  const s = scale;
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 3 * (scale / 60);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const p = parts;
+  const c = (x, y) => [cx + x * s, cy + y * s];
+
+  // head
+  ctx.beginPath();
+  ctx.arc(...c(0, p.headY - 0.5), 0.5 * s, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fill();
+
+  // spine
+  ln(ctx, c(0, p.neckY), c(0, p.hipY));
+
+  // arms
+  ln(ctx, c(0, p.shoulderY), c(p.leftElbow[0], p.leftElbow[1]));
+  ln(ctx, c(p.leftElbow[0], p.leftElbow[1]), c(p.leftHand[0], p.leftHand[1]));
+  ln(ctx, c(0, p.shoulderY), c(p.rightElbow[0], p.rightElbow[1]));
+  ln(ctx, c(p.rightElbow[0], p.rightElbow[1]), c(p.rightHand[0], p.rightHand[1]));
+
+  // legs
+  ln(ctx, c(0, p.hipY), c(p.leftKnee[0], p.leftKnee[1]));
+  ln(ctx, c(p.leftKnee[0], p.leftKnee[1]), c(p.leftFoot[0], p.leftFoot[1]));
+  ln(ctx, c(0, p.hipY), c(p.rightKnee[0], p.rightKnee[1]));
+  ln(ctx, c(p.rightKnee[0], p.rightKnee[1]), c(p.rightFoot[0], p.rightFoot[1]));
+}
+
+function ln(ctx, a, b) {
+  ctx.beginPath();
+  ctx.moveTo(...a);
+  ctx.lineTo(...b);
+  ctx.stroke();
+}
+
+// EXERCISE DRAWINGS
+function drawMarch(ctx, W, H, t) {
+  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
+  const phase = Math.sin(t * 3);
+  const lKneeY = 2.5 - Math.max(0, phase) * 1.2;
+  const rKneeY = 2.5 + Math.max(0, -phase) * 1.2;
+  drawStick(ctx, cx, cy, s, {
+    headY: -3.5,
+    neckY: -3,
+    shoulderY: -2.3,
+    hipY: 0,
+    leftElbow: [-0.8 - phase * 0.3, -1.5 + phase * 0.3],
+    leftHand: [-1.2 - phase * 0.5, -2.5 + phase * 0.5],
+    rightElbow: [0.8 + phase * 0.3, -1.5 - phase * 0.3],
+    rightHand: [1.2 + phase * 0.5, -2.5 - phase * 0.5],
+    leftKnee: [-0.5, lKneeY],
+    leftFoot: [-0.6, lKneeY + 1.2],
+    rightKnee: [0.5, rKneeY],
+    rightFoot: [0.6, rKneeY + 1.2]
+  });
+  label(ctx, cx, cy - s * 4.2, 'March in place!');
+}
+
+function drawArmCircle(ctx, W, H, t) {
+  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
+  const a = t * 2;
+  drawStick(ctx, cx, cy, s, {
+    headY: -3.5,
+    neckY: -3,
+    shoulderY: -2.3,
+    hipY: 0,
+    leftElbow: [-1 + Math.cos(a + Math.PI) * 0.8, -2.3 + Math.sin(a + Math.PI) * 0.8],
+    leftHand: [-1 + Math.cos(a + Math.PI) * 1.6, -2.3 + Math.sin(a + Math.PI) * 1.6],
+    rightElbow: [1 + Math.cos(a) * 0.8, -2.3 + Math.sin(a) * 0.8],
+    rightHand: [1 + Math.cos(a) * 1.6, -2.3 + Math.sin(a) * 1.6],
+    leftKnee: [-0.5, 1.5],
+    leftFoot: [-0.6, 2.8],
+    rightKnee: [0.5, 1.5],
+    rightFoot: [0.6, 2.8]
+  });
+  label(ctx, cx, cy - s * 4.2, 'Arm circles!');
+}
+
+function drawSitToStand(ctx, W, H, t) {
+  const cx = W * 0.75, cy = H * 0.5, s = Math.min(W, H) * 0.09;
+  const phase = (Math.sin(t * 1.5) + 1) / 2;
+  const bend = phase * 1.2;
+  const rise = -phase * 1.5;
+  drawStick(ctx, cx, cy + rise * s, s, {
+    headY: -3.5,
+    neckY: -3,
+    shoulderY: -2.3,
+    hipY: bend,
+    leftElbow: [-0.8, -1.3],
+    leftHand: [-1.2, -0.5],
+    rightElbow: [0.8, -1.3],
+    rightHand: [1.2, -0.5],
+    leftKnee: [-0.5, bend + 1.5 - bend * 0.5],
+    leftFoot: [-0.7, bend + 2.5],
+    rightKnee: [0.5, bend + 1.5 - bend * 0.5],
+    rightFoot: [0.7, bend + 2.5]
+  });
+  label(ctx, cx, cy - s * 4.5, 'Sit to stand!');
+}
+
+function drawSideBend(ctx, W, H, t) {
+  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
+  const lean = Math.sin(t * 1.2) * 0.6;
+  drawStick(ctx, cx, cy, s, {
+    headY: -3.5 + lean * 0.3,
+    neckY: -3 + lean * 0.2,
+    shoulderY: -2.3,
+    hipY: 0,
+    leftElbow: [-0.8, -1.8],
+    leftHand: [-1 + lean * 1.5, -3.5 + lean * 0.5],
+    rightElbow: [0.6, -1.5],
+    rightHand: [0.8, -0.8],
+    leftKnee: [-0.5, 1.5],
+    leftFoot: [-0.6, 2.8],
+    rightKnee: [0.5, 1.5],
+    rightFoot: [0.6, 2.8]
+  });
+  label(ctx, cx, cy - s * 4.5, 'Side bend stretch!');
+}
+
+function drawCalfRaise(ctx, W, H, t) {
+  const cx = W * 0.75, cy = H * 0.45, s = Math.min(W, H) * 0.1;
+  const rise = (Math.sin(t * 2) + 1) / 2 * 0.6;
+  drawStick(ctx, cx, cy - rise * s, s, {
+    headY: -3.5,
+    neckY: -3,
+    shoulderY: -2.3,
+    hipY: 0,
+    leftElbow: [-1.2, -1.5],
+    leftHand: [-1.5, -0.5],
+    rightElbow: [1.2, -1.5],
+    rightHand: [1.5, -0.5],
+    leftKnee: [-0.5, 1.6],
+    leftFoot: [-0.5, 2.5 - rise * 0.5],
+    rightKnee: [0.5, 1.6],
+    rightFoot: [0.5, 2.5 - rise * 0.5]
+  });
+  label(ctx, cx, cy - s * 4.5 - rise * s, 'Calf raises!');
+}
+
+function label(ctx, x, y, text) {
+  ctx.save();
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  const w = ctx.measureText(text).width + 20;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath();
+  ctx.roundRect(x - w/2, y - 16, w, 26, 6);
+  ctx.fill();
+  ctx.fillStyle = 'white';
+  ctx.fillText(text, x, y + 4);
+  ctx.restore();
+}
+
+// ──────────────────────────────────────────────
+// MARK DONE
+// ──────────────────────────────────────────────
+function markDone() {
+  const data = getData(currentProfile);
+  const today = getToday();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+  if (data.lastDone === today) return;
+
+  if (data.lastDone === yesterday) {
+    data.streak = (data.streak || 0) + 1;
+  } else {
+    data.streak = 1;
+  }
+  data.lastDone = today;
+  data.history = data.history || [];
+  data.history.push(today);
+
+  saveData(currentProfile, data);
+
+  document.getElementById('streak-num').textContent = data.streak;
+  document.getElementById('done-btn').textContent = '✓ Done today!';
+  document.getElementById('done-btn').disabled = true;
+
+  showCelebration(data.streak, currentProfile);
+}
+
+// ──────────────────────────────────────────────
+// CELEBRATION
+// ──────────────────────────────────────────────
+function showCelebration(streak, profile) {
+  const cel = document.getElementById('celebration');
+  document.getElementById('cel-streak').textContent = '🔥 ' + streak;
+  document.getElementById('cel-title').textContent =
+    profile === 'mom' ? 'Great job, Mom!' : 'Great job, Dad!';
+  document.getElementById('cel-desc').textContent =
+    streak === 1
+      ? 'Day 1 — the streak begins! Come back tomorrow!'
+      : streak + ' days in a row! Keep it going!';
+
+  const area = document.getElementById('confetti-area');
+  area.innerHTML = '';
+  const colors = ['#f6ad55','#68d391','#63b3ed','#fc8181','#b794f4','#fefcbf'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    const size = 8 + Math.random() * 10;
+    el.style.cssText = `
+      position:absolute;
+      width:${size}px; height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      left:${Math.random() * 100}%;
+      top:-20px;
+      opacity:0.9;
+      animation: fall ${1.5 + Math.random() * 2}s linear ${Math.random() * 0.8}s forwards;
+    `;
+    area.appendChild(el);
+  }
+
+  if (!document.getElementById('confetti-style')) {
+    const st = document.createElement('style');
+    st.id = 'confetti-style';
+    st.textContent = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity:0; } }`;
+    document.head.appendChild(st);
+  }
+
+  cel.classList.add('show');
+}
+
+function closeCelebration() {
+  document.getElementById('celebration').classList.remove('show');
+  goHome();
+}
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+refreshHome();
+</script>
+</body>
+</html>

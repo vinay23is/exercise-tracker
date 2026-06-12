@@ -548,14 +548,14 @@ class ShoulderFlexDetector{
 // ── EXTERNAL ROTATION DETECTOR ───────────────
 class ExternalRotDetector{
   constructor(){this.reset();}
-  reset(){this.count=0;this.target=8;this.out=false;this.last=0;this.feedback='Bend elbow 90° at side, rotate forearm outward';}
+  reset(){this.count=0;this.target=8;this.rOut=false;this.lOut=false;this.last=0;this.feedback='Bend elbow 90° at side, rotate forearm outward';}
   update(n){
     const now=Date.now();if(now-this.last<400)return false;
     const lE=n[7],lW=n[9],rE=n[8],rW=n[10];const thr=0.09*SF();let hit=false;
-    if(okKp(rE)&&okKp(rW)){const rot=rE.x-rW.x>thr;if(rot&&!this.out){this.out=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.out){this.out=false;this.feedback='Rotate forearm outward again';}}
-    if(!hit&&okKp(lE)&&okKp(lW)){const rot=lW.x-lE.x>thr;if(rot&&!this.out){this.out=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.out){this.out=false;this.feedback='Rotate forearm outward again';}}
+    if(okKp(rE)&&okKp(rW)){const rot=rE.x-rW.x>thr;if(rot&&!this.rOut){this.rOut=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.rOut){this.rOut=false;this.feedback='Rotate forearm outward again';}}
+    if(!hit&&okKp(lE)&&okKp(lW)){const rot=lW.x-lE.x>thr;if(rot&&!this.lOut){this.lOut=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.lOut){this.lOut=false;this.feedback='Rotate forearm outward again';}}
     if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
-    if(!this.out)this.feedback='Elbow at side, rotate forearm outward slowly';
+    if(!this.rOut&&!this.lOut)this.feedback='Elbow at side, rotate forearm outward slowly';
     return false;
   }
   get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}

@@ -450,15 +450,130 @@ class CalfRaiseDetector{
   get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
 
+// ── NECK ISOMETRIC DETECTOR ──────────────────
+class NeckIsoDetector{
+  constructor(pos){this.pos=pos;this.reset();}
+  reset(){this.count=0;this.target=1;this.holdStart=null;this.holdDur=7000;this.feedback=this._instr();}
+  _instr(){return{forehead:'Place palm flat on forehead — press firmly and hold',back:'Clasp both hands behind head — press back and hold',left:'Right palm on left temple — press sideways and hold',right:'Left palm on right temple — press sideways and hold'}[this.pos]||'Press and hold for 7 seconds';}
+  update(n){
+    if(this.count>=this.target)return false;
+    const nose=n[0],lW=n[9],rW=n[10],lE=n[7],rE=n[8],lS=n[5],rS=n[6];
+    let det=false;
+    if(this.pos==='back'){
+      if(okKp(lE)&&okKp(lS)&&okKp(rE)&&okKp(rS))det=(lS.y-lE.y>0.04)&&(rS.y-rE.y>0.04);
+      if(!det){for(const w of[lW,rW]){if(okKp(w,0.15)&&okKp(nose,0.15)&&Math.hypot(w.x-nose.x,w.y-nose.y)<0.28){det=true;break;}}}
+    }else{
+      for(const w of[lW,rW]){if(okKp(w,0.15)&&okKp(nose,0.15)&&Math.hypot(w.x-nose.x,w.y-nose.y)<0.22*SF()){det=true;break;}}
+    }
+    if(det){
+      if(!this.holdStart)this.holdStart=Date.now();
+      const held=Date.now()-this.holdStart,rem=Math.max(0,Math.ceil((this.holdDur-held)/1000));
+      this.feedback=rem>0?`Hold firmly… ${rem}s`:'Hold complete ✓';
+      if(held>=this.holdDur){this.count=1;this.holdStart=null;return true;}
+    }else{
+      if(this.holdStart)this.feedback='Hand moved — reposition and hold again';
+      else this.feedback=this._instr();
+      this.holdStart=null;
+    }
+    return false;
+  }
+  get done(){return this.count>=this.target;}
+  get pct(){if(this.count>=this.target)return 1;if(this.holdStart)return Math.min(0.99,(Date.now()-this.holdStart)/this.holdDur);return 0;}
+}
+class NeckForeheadDet extends NeckIsoDetector{constructor(){super('forehead');}}
+class NeckBackDet extends NeckIsoDetector{constructor(){super('back');}}
+class NeckLeftDet extends NeckIsoDetector{constructor(){super('left');}}
+class NeckRightDet extends NeckIsoDetector{constructor(){super('right');}}
+
+// ── PENDULUM SWING DETECTOR ──────────────────
+class PendulumDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=8;this.hist=[];this.lastDir=null;this.last=0;this.feedback='Lean forward, let arm hang and swing side to side';}
+  update(n){
+    const now=Date.now();if(now-this.last<300)return false;this.last=now;
+    const lW=n[9],rW=n[10],lH=n[11],rH=n[12];
+    const hipY=(okKp(lH)&&okKp(rH))?(lH.y+rH.y)/2:okKp(lH)?lH.y:okKp(rH)?rH.y:null;
+    if(hipY===null)return false;
+    let wX=null;
+    if(okKp(rW)&&rW.y>hipY+0.05)wX=rW.x;
+    else if(okKp(lW)&&lW.y>hipY+0.05)wX=lW.x;
+    if(wX===null){this.feedback='Let arm hang loosely below hip level';return false;}
+    this.hist.push({t:now,x:wX});this.hist=this.hist.filter(h=>now-h.t<1500);
+    if(this.hist.length<5)return false;
+    const spread=Math.max(...this.hist.map(h=>h.x))-Math.min(...this.hist.map(h=>h.x));
+    if(spread<0.04*SF()){this.feedback='Swing a little wider';return false;}
+    const midX=this.hist.reduce((s,h)=>s+h.x,0)/this.hist.length;
+    const dir=wX>midX?'right':'left';
+    if(dir!==this.lastDir&&this.lastDir!==null){this.lastDir=dir;this.count=Math.min(this.count+1,this.target);this.feedback='Good swing ✓ — keep going';return true;}
+    this.lastDir=dir;this.feedback='Keep swinging the arm gently';return false;
+  }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
+}
+
+// ── CROSS-BODY STRETCH DETECTOR ───────────────
+class CrossBodyDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=5;this.crossed=false;this.last=0;this.feedback='Bring arm across chest to the opposite shoulder';}
+  update(n){
+    const now=Date.now();if(now-this.last<500)return false;
+    const lW=n[9],rW=n[10],lS=n[5],rS=n[6];
+    if(!okKp(lS)||!okKp(rS))return false;
+    const midX=(lS.x+rS.x)/2,thr=0.10*SF();
+    let cr=false;
+    if(okKp(rW)&&rW.x>midX+thr)cr=true;
+    if(!cr&&okKp(lW)&&lW.x<midX-thr)cr=true;
+    if(cr&&!this.crossed){this.crossed=true;this.count=Math.min(this.count+1,this.target);this.last=now;this.feedback='Good stretch ✓ — hold, then switch arms';return true;}
+    if(!cr&&this.crossed){this.crossed=false;this.feedback='Now cross the other arm';}
+    else if(!cr)this.feedback='Pull arm fully across to opposite shoulder';
+    return false;
+  }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
+}
+
+// ── SHOULDER FORWARD FLEX DETECTOR ───────────
+class ShoulderFlexDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=8;this.lUp=false;this.rUp=false;this.last=0;this.feedback='Slowly raise arm forward as high as comfortable';}
+  update(n){
+    const now=Date.now();if(now-this.last<450)return false;
+    const lW=n[9],lS=n[5],rW=n[10],rS=n[6];const thr=0.08*SF();let hit=false;
+    if(okKp(lW)&&okKp(lS)){const up=lS.y-lW.y>thr;if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left arm raised ✓';}if(!up)this.lUp=false;}
+    if(okKp(rW)&&okKp(rS)){const up=rS.y-rW.y>thr;if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right arm raised ✓';}if(!up)this.rUp=false;}
+    if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
+    this.feedback='Raise arm forward slowly, as high as comfortable';return false;
+  }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
+}
+
+// ── EXTERNAL ROTATION DETECTOR ───────────────
+class ExternalRotDetector{
+  constructor(){this.reset();}
+  reset(){this.count=0;this.target=8;this.out=false;this.last=0;this.feedback='Bend elbow 90° at side, rotate forearm outward';}
+  update(n){
+    const now=Date.now();if(now-this.last<400)return false;
+    const lE=n[7],lW=n[9],rE=n[8],rW=n[10];const thr=0.09*SF();let hit=false;
+    if(okKp(rE)&&okKp(rW)){const rot=rE.x-rW.x>thr;if(rot&&!this.out){this.out=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.out){this.out=false;this.feedback='Rotate forearm outward again';}}
+    if(!hit&&okKp(lE)&&okKp(lW)){const rot=lW.x-lE.x>thr;if(rot&&!this.out){this.out=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.out){this.out=false;this.feedback='Rotate forearm outward again';}}
+    if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
+    if(!this.out)this.feedback='Elbow at side, rotate forearm outward slowly';
+    return false;
+  }
+  get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
+}
+
 // ── EXERCISES ────────────────────────────────
 const MOM_EXERCISES=[
-  {id:'march',   name:'Standing March',    desc:'Lift knees alternately above hip height. Keep back straight, arms swinging.  (8 reps)',    Det:MarchDetector,    draw:drawMarch},
-  {id:'armcirc', name:'Arm Circles',       desc:'Make large arm circles, raising each wrist above shoulder height each revolution.  (6 raises)',Det:ArmRaiseDetector,draw:drawArmCircle},
-  {id:'sitstand',name:'Sit-to-Stand',      desc:'Start seated. Stand fully until knees are straight, then sit back down.  (5 stands)',      Det:SitStandDetector, draw:drawSitToStand},
-  {id:'sidebend',name:'Side Bend Stretch', desc:'Raise one arm and lean your torso clearly to the opposite side. Alternate.  (6 bends)',    Det:SideBendDetector, draw:drawSideBend},
-  {id:'calfrise',name:'Calf Raises',       desc:'Hold a chair for balance. Rise onto tiptoes, hold briefly, lower down.  (8 raises)',        Det:CalfRaiseDetector,draw:drawCalfRaise}
+  {id:'neck-front',name:'Forehead Press',    desc:'Sit close to camera. Place palm flat on forehead — press firmly into palm, resist all movement. Stop if dizziness or tingling. (7-second hold)',Det:NeckForeheadDet,  draw:drawNeckForehead},
+  {id:'neck-back', name:'Back of Head Press',desc:'Clasp both hands behind head — press head backwards into hands, resist all movement. Stop immediately if any dizziness. (7-second hold)',   Det:NeckBackDet,      draw:drawNeckBack},
+  {id:'neck-left', name:'Left Temple Press', desc:'Place right palm on left temple — press head sideways into palm, resist movement. Stay in pain-free range only. (7-second hold)',          Det:NeckLeftDet,      draw:drawNeckLeft},
+  {id:'neck-right',name:'Right Temple Press',desc:'Place left palm on right temple — press head sideways into palm, resist movement. Stay in pain-free range only. (7-second hold)',         Det:NeckRightDet,     draw:drawNeckRight},
 ];
-const DAD_EXERCISES=[...MOM_EXERCISES];
+const DAD_EXERCISES=[
+  {id:'pendulum',  name:'Pendulum Swings',   desc:'Hold a table for support. Lean forward slightly, let affected arm hang loose. Swing gently side to side — let gravity do the work. (8 swings)',      Det:PendulumDetector,   draw:drawPendulum},
+  {id:'crossbody', name:'Cross-body Stretch',desc:'Bring arm across chest toward opposite shoulder. Use other hand to assist gently. Hold 5 seconds then release. Alternate arms. (5 stretches)',        Det:CrossBodyDetector,  draw:drawCrossBody},
+  {id:'shflex',    name:'Forward Arm Raise', desc:'Keep arm straight. Slowly raise forward and upward as high as comfortable — no pain. Lower slowly. (8 raises)',                                        Det:ShoulderFlexDetector,draw:drawShoulderFlex},
+  {id:'extrot',    name:'External Rotation', desc:'Bend elbow 90°, keep upper arm pinned to side. Rotate forearm outward like opening a door. Return slowly. (8 rotations)',                              Det:ExternalRotDetector, draw:drawExtRotation},
+];
 let exercises=MOM_EXERCISES;
 
 // ── STATE ────────────────────────────────────
@@ -902,6 +1017,31 @@ function updateDebug(n,visCount,bodyBlocked){
     const base=sorted.length?sorted[Math.floor(sorted.length*0.6)].y:NaN;
     lines.push('thr baseline-shoulder Y > '+fmt(thr));
     lines.push('baseline '+fmt(base)+' shoulder '+fmt(sh)+' diff '+fmt(base-sh));
+  }else if(ex.id==='neck-front'||ex.id==='neck-back'||ex.id==='neck-left'||ex.id==='neck-right'){
+    const det=dets[exIdx],nose=n[0],lW=n[9],rW=n[10];
+    const dR=okKp(rW,0.15)&&okKp(nose,0.15)?fmt(Math.hypot(rW.x-nose.x,rW.y-nose.y)):'n/a';
+    const dL=okKp(lW,0.15)&&okKp(nose,0.15)?fmt(Math.hypot(lW.x-nose.x,lW.y-nose.y)):'n/a';
+    lines.push('thr wrist-nose dist < '+fmt(0.22*SF()));
+    lines.push('R wrist dist '+dR+' L wrist dist '+dL);
+    lines.push(det.holdStart?'hold elapsed '+((Date.now()-det.holdStart)/1000).toFixed(1)+'s / 7s':'not holding');
+  }else if(ex.id==='pendulum'){
+    const det=dets[exIdx],lW=n[9],rW=n[10],lH=n[11],rH=n[12];
+    const hipY=(okKp(lH)&&okKp(rH))?(lH.y+rH.y)/2:NaN;
+    const spread=det.hist.length>1?fmt(Math.max(...det.hist.map(h=>h.x))-Math.min(...det.hist.map(h=>h.x))):'n/a';
+    lines.push('hip Y '+fmt(hipY)+' need wrist.y > hipY+0.05');
+    lines.push('L wrist Y '+fmt(lW?.y)+' R wrist Y '+fmt(rW?.y));
+    lines.push('swing spread '+spread+' (need > '+fmt(0.04*SF())+') dir:'+det.lastDir);
+  }else if(ex.id==='crossbody'){
+    const lW=n[9],rW=n[10],lS=n[5],rS=n[6];
+    const midX=okKp(lS)&&okKp(rS)?(lS.x+rS.x)/2:NaN;
+    lines.push('midX '+fmt(midX)+' thr '+fmt(0.10*SF()));
+    lines.push('R wrist x '+fmt(rW?.x)+' L wrist x '+fmt(lW?.x));
+  }else if(ex.id==='shflex'){
+    lines.push('thr shoulder-wrist Y > '+fmt(0.08*SF()));
+    lines.push('L '+fmt(n[5]?.y-n[9]?.y)+' R '+fmt(n[6]?.y-n[10]?.y));
+  }else if(ex.id==='extrot'){
+    lines.push('thr elbow-wrist X > '+fmt(0.09*SF()));
+    lines.push('R (rE.x-rW.x) '+fmt(n[8]?.x-n[10]?.x)+' L (lW.x-lE.x) '+fmt(n[9]?.x-n[7]?.x));
   }
   const det=dets[exIdx];
   lines.push('reps '+det.count+'/'+det.target);
@@ -1058,6 +1198,70 @@ function drawCalfRaise(ctx,W,H,t){
     lEl:[-1.2,-1.5],lWr:[-1.5,-0.5],rEl:[1.2,-1.5],rWr:[1.5,-0.5],
     lKn:[-0.5,1.6],lFt:[-0.5,2.5-rise*.5],rKn:[0.5,1.6],rFt:[0.5,2.5-rise*.5]});
   glbl(ctx,cx,cy-s*4.5-rise*s,'Rise on tiptoes!');
+}
+function drawNeckForehead(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,pulse=Math.sin(t*4)*.04;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    rEl:[0.5,-2.8],rWr:[0.1+pulse,-3.3],
+    lEl:[-0.7,-1.5],lWr:[-1.0,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Press forehead!');
+}
+function drawNeckBack(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    lEl:[-1.1,-2.8],lWr:[-0.3,-3.4],
+    rEl:[1.1,-2.8],rWr:[0.3,-3.4],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Hands behind head!');
+}
+function drawNeckLeft(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,pulse=Math.sin(t*4)*.03;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    rEl:[0.1,-2.6],rWr:[-0.5+pulse,-3.3],
+    lEl:[-0.7,-1.5],lWr:[-1.0,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Press left temple!');
+}
+function drawNeckRight(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,pulse=Math.sin(t*4)*.03;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    lEl:[-0.1,-2.6],lWr:[0.5-pulse,-3.3],
+    rEl:[0.7,-1.5],rWr:[1.0,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Press right temple!');
+}
+function drawPendulum(ctx,W,H,t){
+  const cx=W*.78,cy=H*.46,s=Math.min(W,H)*.1,sw=Math.sin(t*2.5)*.9;
+  drawStick(ctx,cx,cy,s,{headY:-3.0,neckY:-2.5,shoulderY:-1.8,hipY:0.6,
+    rEl:[0.4+sw*.4,0.5],rWr:[0.3+sw,1.6],
+    lEl:[-1.1,-1.0],lWr:[-1.5,-0.2],
+    lKn:[-0.5,2.2],lFt:[-0.6,3.4],rKn:[0.5,2.2],rFt:[0.6,3.4]});
+  glbl(ctx,cx,cy-s*3.6,'Swing gently!');
+}
+function drawCrossBody(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,reach=(Math.sin(t*1.5)+1)/2;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    rEl:[-0.2+reach*.2,-1.8],rWr:[-0.7-reach*.5,-2.0],
+    lEl:[-0.7,-1.5],lWr:[-1.0,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Arm across chest!');
+}
+function drawShoulderFlex(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,raise=(Math.sin(t*1.5)+1)/2;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    rEl:[0.7-raise*.3,-1.5-raise*.9],rWr:[0.5-raise*.3,-2.3-raise*1.8],
+    lEl:[-0.7,-1.5],lWr:[-1.0,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Raise arm forward!');
+}
+function drawExtRotation(ctx,W,H,t){
+  const cx=W*.78,cy=H*.42,s=Math.min(W,H)*.1,rot=Math.sin(t*2)*.8;
+  drawStick(ctx,cx,cy,s,{headY:-3.5,neckY:-3,shoulderY:-2.3,hipY:0,
+    rEl:[0.7,-0.9],rWr:[0.7+rot,-1.5],
+    lEl:[-0.7,-1.5],lWr:[-1.0,-0.8],
+    lKn:[-0.5,1.5],lFt:[-0.6,2.8],rKn:[0.5,1.5],rFt:[0.6,2.8]});
+  glbl(ctx,cx,cy-s*4.2,'Rotate forearm out!');
 }
 
 // ── INIT ──────────────────────────────────────

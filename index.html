@@ -458,19 +458,21 @@ class NeckIsoDetector{
   update(n){
     if(this.count>=this.target)return false;
     const nose=n[0],lW=n[9],rW=n[10],lE=n[7],rE=n[8],lS=n[5],rS=n[6];
+    // nearFace: wrist must be within dist AND at face height (y within yTol of nose)
+    const nearFace=(w,dist,yTol=0.10)=>okKp(w,0.25)&&okKp(nose,0.25)&&Math.hypot(w.x-nose.x,w.y-nose.y)<dist*SF()&&Math.abs(w.y-nose.y)<yTol;
     let det=false;
     if(this.pos==='back'){
       if(okKp(lE)&&okKp(lS)&&okKp(rE)&&okKp(rS))det=(lS.y-lE.y>0.04)&&(rS.y-rE.y>0.04);
-      if(!det){for(const w of[lW,rW]){if(okKp(w,0.15)&&okKp(nose,0.15)&&Math.hypot(w.x-nose.x,w.y-nose.y)<0.28){det=true;break;}}}
+      if(!det){for(const w of[lW,rW]){if(nearFace(w,0.22,0.14)){det=true;break;}}}
     }else if(this.pos==='left'){
-      // Right hand (kp10) pressing left temple — wrist must be on person's left (image-right, larger X)
-      if(okKp(rW,0.15)&&okKp(nose,0.15)&&Math.hypot(rW.x-nose.x,rW.y-nose.y)<0.22*SF()&&rW.x>nose.x-0.05)det=true;
+      // Right hand (kp10) pressing left temple — wrist on person's left (image-right, larger X)
+      det=nearFace(rW,0.17)&&rW.x>nose.x-0.04;
     }else if(this.pos==='right'){
-      // Left hand (kp9) pressing right temple — wrist must be on person's right (image-left, smaller X)
-      if(okKp(lW,0.15)&&okKp(nose,0.15)&&Math.hypot(lW.x-nose.x,lW.y-nose.y)<0.22*SF()&&lW.x<nose.x+0.05)det=true;
+      // Left hand (kp9) pressing right temple — wrist on person's right (image-left, smaller X)
+      det=nearFace(lW,0.17)&&lW.x<nose.x+0.04;
     }else{
-      // forehead: either wrist near nose
-      for(const w of[lW,rW]){if(okKp(w,0.15)&&okKp(nose,0.15)&&Math.hypot(w.x-nose.x,w.y-nose.y)<0.22*SF()){det=true;break;}}
+      // forehead: either wrist near nose at face height
+      for(const w of[lW,rW]){if(nearFace(w,0.17)){det=true;break;}}
     }
     if(det){
       if(!this.holdStart)this.holdStart=Date.now();
@@ -497,18 +499,18 @@ class PendulumDetector{
   constructor(){this.reset();}
   reset(){this.count=0;this.target=8;this.hist=[];this.lastDir=null;this.last=0;this.feedback='Lean forward, let arm hang and swing side to side';}
   update(n){
-    const now=Date.now();if(now-this.last<300)return false;this.last=now;
+    const now=Date.now();if(now-this.last<500)return false;this.last=now;
     const lW=n[9],rW=n[10],lH=n[11],rH=n[12];
     const hipY=(okKp(lH)&&okKp(rH))?(lH.y+rH.y)/2:okKp(lH)?lH.y:okKp(rH)?rH.y:null;
     if(hipY===null)return false;
     let wX=null;
-    if(okKp(rW)&&rW.y>hipY+0.05)wX=rW.x;
-    else if(okKp(lW)&&lW.y>hipY+0.05)wX=lW.x;
+    if(okKp(rW)&&rW.y>hipY+0.06)wX=rW.x;
+    else if(okKp(lW)&&lW.y>hipY+0.06)wX=lW.x;
     if(wX===null){this.feedback='Let arm hang loosely below hip level';return false;}
-    this.hist.push({t:now,x:wX});this.hist=this.hist.filter(h=>now-h.t<1500);
-    if(this.hist.length<5)return false;
+    this.hist.push({t:now,x:wX});this.hist=this.hist.filter(h=>now-h.t<2000);
+    if(this.hist.length<8)return false;
     const spread=Math.max(...this.hist.map(h=>h.x))-Math.min(...this.hist.map(h=>h.x));
-    if(spread<0.04*SF()){this.feedback='Swing a little wider';return false;}
+    if(spread<0.07*SF()){this.feedback='Swing a little wider';return false;}
     const midX=this.hist.reduce((s,h)=>s+h.x,0)/this.hist.length;
     const dir=wX>midX?'right':'left';
     if(dir!==this.lastDir){this.lastDir=dir;this.count=Math.min(this.count+1,this.target);this.feedback='Good swing ✓ — keep going';return true;}
@@ -525,7 +527,7 @@ class CrossBodyDetector{
     const now=Date.now();if(now-this.last<500)return false;
     const lW=n[9],rW=n[10],lS=n[5],rS=n[6];
     if(!okKp(lS)||!okKp(rS))return false;
-    const midX=(lS.x+rS.x)/2,thr=0.10*SF();
+    const midX=(lS.x+rS.x)/2,thr=0.13*SF();
     let cr=false;
     if(okKp(rW)&&rW.x>midX+thr)cr=true;
     if(!cr&&okKp(lW)&&lW.x<midX-thr)cr=true;
@@ -543,7 +545,7 @@ class ShoulderFlexDetector{
   reset(){this.count=0;this.target=8;this.lUp=false;this.rUp=false;this.last=0;this.feedback='Slowly raise arm forward as high as comfortable';}
   update(n){
     const now=Date.now();if(now-this.last<450)return false;
-    const lW=n[9],lS=n[5],rW=n[10],rS=n[6];const thr=0.08*SF();let hit=false;
+    const lW=n[9],lS=n[5],rW=n[10],rS=n[6];const thr=0.12*SF();let hit=false;
     if(okKp(lW)&&okKp(lS)){const up=lS.y-lW.y>thr;if(up&&!this.lUp){this.lUp=true;hit=true;this.feedback='Left arm raised ✓';}if(!up)this.lUp=false;}
     if(okKp(rW)&&okKp(rS)){const up=rS.y-rW.y>thr;if(up&&!this.rUp){this.rUp=true;hit=true;this.feedback='Right arm raised ✓';}if(!up)this.rUp=false;}
     if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
@@ -558,7 +560,7 @@ class ExternalRotDetector{
   reset(){this.count=0;this.target=8;this.rOut=false;this.lOut=false;this.last=0;this.feedback='Bend elbow 90° at side, rotate forearm outward';}
   update(n){
     const now=Date.now();if(now-this.last<400)return false;
-    const lE=n[7],lW=n[9],rE=n[8],rW=n[10];const thr=0.09*SF();let hit=false;
+    const lE=n[7],lW=n[9],rE=n[8],rW=n[10];const thr=0.12*SF();let hit=false;
     if(okKp(rE)&&okKp(rW)){const rot=rE.x-rW.x>thr;if(rot&&!this.rOut){this.rOut=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.rOut){this.rOut=false;this.feedback='Rotate forearm outward again';}}
     if(!hit&&okKp(lE)&&okKp(lW)){const rot=lW.x-lE.x>thr;if(rot&&!this.lOut){this.lOut=true;hit=true;this.feedback='Good rotation ✓ — rotate back in, then out';}if(!rot&&this.lOut){this.lOut=false;this.feedback='Rotate forearm outward again';}}
     if(hit){this.count=Math.min(this.count+1,this.target);this.last=now;return true;}
@@ -933,16 +935,18 @@ function onRep(){
 function drawSkeleton(ctx,kps,cw,ch,vw,vh){
   const sx=cw/vw,sy=ch/vh;
   const fx=x=>cw-x*sx,fy=y=>y*sy; // flip x to match mirrored video
-  const MIN=0.3;
-  ctx.strokeStyle='rgba(72,187,120,0.75)';ctx.lineWidth=2.5;ctx.lineCap='round';
+  const BONE_MIN=0.5,DOT_MIN=0.4;
+  ctx.lineWidth=3;ctx.lineCap='round';
   for(const[i,j]of BONES){
-    const a=kps[i],b=kps[j];if(!a||!b||a.score<MIN||b.score<MIN)continue;
+    const a=kps[i],b=kps[j];if(!a||!b||a.score<BONE_MIN||b.score<BONE_MIN)continue;
+    const alpha=Math.min(a.score,b.score);
+    ctx.strokeStyle=`rgba(72,187,120,${(alpha*0.9).toFixed(2)})`;
     ctx.beginPath();ctx.moveTo(fx(a.x),fy(a.y));ctx.lineTo(fx(b.x),fy(b.y));ctx.stroke();
   }
   for(const k of kps){
-    if(k.score<MIN)continue;
-    ctx.beginPath();ctx.arc(fx(k.x),fy(k.y),4,0,Math.PI*2);
-    ctx.fillStyle=k.score>0.6?'rgba(72,187,120,0.95)':'rgba(72,187,120,0.5)';ctx.fill();
+    if(k.score<DOT_MIN)continue;
+    ctx.beginPath();ctx.arc(fx(k.x),fy(k.y),k.score>0.7?5:3,0,Math.PI*2);
+    ctx.fillStyle=`rgba(72,187,120,${k.score.toFixed(2)})`;ctx.fill();
   }
 }
 

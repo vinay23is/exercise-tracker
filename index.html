@@ -462,7 +462,14 @@ class NeckIsoDetector{
     if(this.pos==='back'){
       if(okKp(lE)&&okKp(lS)&&okKp(rE)&&okKp(rS))det=(lS.y-lE.y>0.04)&&(rS.y-rE.y>0.04);
       if(!det){for(const w of[lW,rW]){if(okKp(w,0.15)&&okKp(nose,0.15)&&Math.hypot(w.x-nose.x,w.y-nose.y)<0.28){det=true;break;}}}
+    }else if(this.pos==='left'){
+      // Right hand (kp10) pressing left temple — wrist must be on person's left (image-right, larger X)
+      if(okKp(rW,0.15)&&okKp(nose,0.15)&&Math.hypot(rW.x-nose.x,rW.y-nose.y)<0.22*SF()&&rW.x>nose.x-0.05)det=true;
+    }else if(this.pos==='right'){
+      // Left hand (kp9) pressing right temple — wrist must be on person's right (image-left, smaller X)
+      if(okKp(lW,0.15)&&okKp(nose,0.15)&&Math.hypot(lW.x-nose.x,lW.y-nose.y)<0.22*SF()&&lW.x<nose.x+0.05)det=true;
     }else{
+      // forehead: either wrist near nose
       for(const w of[lW,rW]){if(okKp(w,0.15)&&okKp(nose,0.15)&&Math.hypot(w.x-nose.x,w.y-nose.y)<0.22*SF()){det=true;break;}}
     }
     if(det){
@@ -504,8 +511,8 @@ class PendulumDetector{
     if(spread<0.04*SF()){this.feedback='Swing a little wider';return false;}
     const midX=this.hist.reduce((s,h)=>s+h.x,0)/this.hist.length;
     const dir=wX>midX?'right':'left';
-    if(dir!==this.lastDir&&this.lastDir!==null){this.lastDir=dir;this.count=Math.min(this.count+1,this.target);this.feedback='Good swing ✓ — keep going';return true;}
-    this.lastDir=dir;this.feedback='Keep swinging the arm gently';return false;
+    if(dir!==this.lastDir){this.lastDir=dir;this.count=Math.min(this.count+1,this.target);this.feedback='Good swing ✓ — keep going';return true;}
+    this.feedback='Keep swinging the arm gently';return false;
   }
   get done(){return this.count>=this.target;}get pct(){return this.count/this.target;}
 }
@@ -562,17 +569,19 @@ class ExternalRotDetector{
 }
 
 // ── EXERCISES ────────────────────────────────
+const NECK_VIS={visKps:[0,5,6],visMin:2,warnMsg:'Move back slightly — face and shoulders must be visible'};
+const BODY_VIS={visKps:[5,6,11,12],visMin:3,warnMsg:'Step back — shoulders and hips must be visible'};
 const MOM_EXERCISES=[
-  {id:'neck-front',name:'Forehead Press',    desc:'Sit close to camera. Place palm flat on forehead — press firmly into palm, resist all movement. Stop if dizziness or tingling. (7-second hold)',Det:NeckForeheadDet,  draw:drawNeckForehead},
-  {id:'neck-back', name:'Back of Head Press',desc:'Clasp both hands behind head — press head backwards into hands, resist all movement. Stop immediately if any dizziness. (7-second hold)',   Det:NeckBackDet,      draw:drawNeckBack},
-  {id:'neck-left', name:'Left Temple Press', desc:'Place right palm on left temple — press head sideways into palm, resist movement. Stay in pain-free range only. (7-second hold)',          Det:NeckLeftDet,      draw:drawNeckLeft},
-  {id:'neck-right',name:'Right Temple Press',desc:'Place left palm on right temple — press head sideways into palm, resist movement. Stay in pain-free range only. (7-second hold)',         Det:NeckRightDet,     draw:drawNeckRight},
+  {id:'neck-front',name:'Forehead Press',    desc:'Sit close to camera. Place palm flat on forehead — press firmly into palm, resist all movement. Stop if dizziness or tingling. (7-second hold)',Det:NeckForeheadDet,  draw:drawNeckForehead,...NECK_VIS},
+  {id:'neck-back', name:'Back of Head Press',desc:'Clasp both hands behind head — press head backwards into hands, resist all movement. Stop immediately if any dizziness. (7-second hold)',   Det:NeckBackDet,      draw:drawNeckBack,    ...NECK_VIS},
+  {id:'neck-left', name:'Left Temple Press', desc:'Place right palm on left temple — press head sideways into palm, resist movement. Stay in pain-free range only. (7-second hold)',          Det:NeckLeftDet,      draw:drawNeckLeft,    ...NECK_VIS},
+  {id:'neck-right',name:'Right Temple Press',desc:'Place left palm on right temple — press head sideways into palm, resist movement. Stay in pain-free range only. (7-second hold)',         Det:NeckRightDet,     draw:drawNeckRight,   ...NECK_VIS},
 ];
 const DAD_EXERCISES=[
-  {id:'pendulum',  name:'Pendulum Swings',   desc:'Hold a table for support. Lean forward slightly, let affected arm hang loose. Swing gently side to side — let gravity do the work. (8 swings)',      Det:PendulumDetector,   draw:drawPendulum},
-  {id:'crossbody', name:'Cross-body Stretch',desc:'Bring arm across chest toward opposite shoulder. Use other hand to assist gently. Hold 5 seconds then release. Alternate arms. (5 stretches)',        Det:CrossBodyDetector,  draw:drawCrossBody},
-  {id:'shflex',    name:'Forward Arm Raise', desc:'Keep arm straight. Slowly raise forward and upward as high as comfortable — no pain. Lower slowly. (8 raises)',                                        Det:ShoulderFlexDetector,draw:drawShoulderFlex},
-  {id:'extrot',    name:'External Rotation', desc:'Bend elbow 90°, keep upper arm pinned to side. Rotate forearm outward like opening a door. Return slowly. (8 rotations)',                              Det:ExternalRotDetector, draw:drawExtRotation},
+  {id:'pendulum',  name:'Pendulum Swings',   desc:'Hold a table for support. Lean forward slightly, let affected arm hang loose. Swing gently side to side — let gravity do the work. (8 swings)',      Det:PendulumDetector,   draw:drawPendulum,    ...BODY_VIS},
+  {id:'crossbody', name:'Cross-body Stretch',desc:'Bring arm across chest toward opposite shoulder. Use other hand to assist gently. Hold 5 seconds then release. Alternate arms. (5 stretches)',        Det:CrossBodyDetector,  draw:drawCrossBody,   ...BODY_VIS},
+  {id:'shflex',    name:'Forward Arm Raise', desc:'Keep arm straight. Slowly raise forward and upward as high as comfortable — no pain. Lower slowly. (8 raises)',                                        Det:ShoulderFlexDetector,draw:drawShoulderFlex,...BODY_VIS},
+  {id:'extrot',    name:'External Rotation', desc:'Bend elbow 90°, keep upper arm pinned to side. Rotate forearm outward like opening a door. Return slowly. (8 rotations)',                              Det:ExternalRotDetector, draw:drawExtRotation, ...BODY_VIS},
 ];
 let exercises=MOM_EXERCISES;
 
@@ -844,11 +853,14 @@ function startRaf(){
             const vw=vid.videoWidth||canvas.width,vh=vid.videoHeight||canvas.height;
             const nkps=normKps(kps,vw,vh);
 
-            // Body visibility check
-            const visCount=CORE_KP.filter(i=>nkps[i]&&nkps[i].score>=0.3).length;
+            // Per-exercise body visibility check
+            const exVis=exercises[exIdx].visKps||CORE_KP;
+            const exVisMin=exercises[exIdx].visMin||4;
+            const exWarnMsg=exercises[exIdx].warnMsg||'Step back — full body not in frame';
+            const visCount=exVis.filter(i=>nkps[i]&&nkps[i].score>=0.3).length;
             const warn=document.getElementById('body-warn');
-            const bodyBlocked=visCount<4;
-            if(bodyBlocked){warn.textContent='Step back — full body not in frame';warn.classList.add('show');speakWarn('Step back so your full body is visible');}
+            const bodyBlocked=visCount<exVisMin;
+            if(bodyBlocked){warn.textContent=exWarnMsg;warn.classList.add('show');speakWarn(exWarnMsg);}
             else{warn.classList.remove('show');}
 
             // Update current detector
@@ -986,10 +998,12 @@ function updateDebug(n,visCount,bodyBlocked){
   if(!debugMode||!panel)return;
   const fmt=v=>Number.isFinite(v)?v.toFixed(3):'n/a';
   const ex=exercises[exIdx];
+  const exVis=exercises[exIdx].visKps||CORE_KP;
+  const exVisMin=exercises[exIdx].visMin||4;
   const lines=[
     'Exercise: '+ex.name,
     'Sensitivity: '+SENS+' (SF '+SF()+')',
-    'Visible core: '+visCount+'/6 '+(bodyBlocked?'PAUSED':'counting')
+    'Visible kps: '+visCount+'/'+exVis.length+' need '+exVisMin+' '+(bodyBlocked?'PAUSED':'counting')
   ];
   if(ex.id==='march'){
     const thr=0.07*SF();
